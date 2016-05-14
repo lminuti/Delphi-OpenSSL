@@ -24,10 +24,13 @@ unit OpenSSL.RSAUtils;
 interface
 
 uses
-  System.Classes, System.SysUtils, OpenSSL.libeay32, OpenSSL.Core, IdSSLOpenSSLHeaders;
+  System.Classes, System.SysUtils, System.AnsiStrings, OpenSSL.libeay32,
+  OpenSSL.Core, IdSSLOpenSSLHeaders;
 
 type
   TX509Cerificate = class;
+
+  TPassphraseEvent = procedure (Sender :TObject; var Passphrase :string) of object;
 
   // RSA public key
   TRSAPublicKey = class(TOpenSLLBase)
@@ -48,6 +51,7 @@ type
   TRSAPrivateKey = class(TOpenSLLBase)
   private
     FRSA :PRSA;
+    FOnNeedPassphrase: TPassphraseEvent;
     procedure FreeRSA;
     function GetRSA :PRSA;
   public
@@ -55,6 +59,7 @@ type
     destructor Destroy; override;
     function IsValid :Boolean;
     procedure LoadFromFile(const FileName :string);
+    property OnNeedPassphrase :TPassphraseEvent read FOnNeedPassphrase write FOnNeedPassphrase;
   end;
 
   // certificate containing an RSA public key
@@ -308,6 +313,32 @@ end;
 procedure TRSAPrivateKey.LoadFromFile(const FileName: string);
 var
   KeyFile :pBIO;
+
+  // rwflag is a flag set to 0 when reading and 1 when writing
+  // The u parameter has the same value as the u parameter passed to the PEM routines
+  function cb(buf: PAnsiChar; buffsize: integer; rwflag: integer; u: pointer): integer; cdecl;
+  var
+    Len :Integer;
+    Password :string;
+    PrivateKey :TRSAPrivateKey;
+  begin
+    Result := 0;
+    if Assigned(u) then
+    begin
+      PrivateKey := TRSAPrivateKey(u);
+      if Assigned(PrivateKey.FOnNeedPassphrase) then
+      begin
+        PrivateKey.FOnNeedPassphrase(PrivateKey, Password);
+        if Length(Password) < buffsize then
+          Len := Length(Password)
+        else
+          Len := buffsize;
+        System.AnsiStrings.StrPLCopy(buf, AnsiString(Password), Len);
+        Result := Len;
+      end;
+    end;
+  end;
+
 begin
   KeyFile := BIO_new(BIO_s_file());
 
@@ -315,7 +346,7 @@ begin
   if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
     RaiseOpenSSLError('RSA load file error');
   try
-    FRSA := PEM_read_bio_RSAPrivateKey(KeyFile, nil, nil, nil);
+    FRSA := PEM_read_bio_RSAPrivateKey(KeyFile, nil, @cb, Self);
     if not Assigned(FRSA) then
       RaiseOpenSSLError('RSA load private key error');
   finally

@@ -12,3 +12,4 @@ TestData/.rnd
 *.txt
 *.certcry
 *.keycry
+.rnd

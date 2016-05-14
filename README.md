@@ -14,7 +14,6 @@ Delphi OpenSSL offers an API to Encrypt/Decrypt
 
 ## Todo
 
-- Support for password protected certificate
 - Read certificate from a buffer
 - Sign e verify
 - Symmetric cryptography

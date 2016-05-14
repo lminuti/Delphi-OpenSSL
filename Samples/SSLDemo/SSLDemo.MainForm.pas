@@ -25,7 +25,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.StdCtrls, Vcl.Controls, Vcl.Forms;
+  System.Classes, Vcl.StdCtrls, Vcl.Controls, Vcl.Forms, Vcl.Dialogs;
 
 type
   TMainForm = class(TForm)
@@ -54,7 +54,7 @@ type
     procedure btnCryptWithCertClick(Sender: TObject);
     procedure btnGenerateSampleFileClick(Sender: TObject);
   private
-    { Private declarations }
+    procedure PassphraseReader(Sender :TObject; var Passphrase :string);
   public
     { Public declarations }
   end;
@@ -90,6 +90,7 @@ var
 begin
   RSAUtil := TRSAUtil.Create;
   try
+    RSAUtil.PrivateKey.OnNeedPassphrase := PassphraseReader;
     RSAUtil.PrivateKey.LoadFromFile(edtPriv.Text);
     RSAUtil.PrivateDecrypt(edtTextToCrypt.Text + '.certcry', edtTextToCrypt.Text + '.certdecry.txt');
   finally
@@ -140,6 +141,11 @@ begin
   edtPriv.Text := TestFolder + 'privatekey.pem';
   edtPub.Text := TestFolder + 'publickey.pem';
   edtTextToCrypt.Text := TestFolder + 'test.txt';
+end;
+
+procedure TMainForm.PassphraseReader(Sender: TObject; var Passphrase: string);
+begin
+  Passphrase := InputBox(Name, 'Passphrase', '');
 end;
 
 end.
