@@ -24,7 +24,7 @@ unit OpenSSL.RSAUtils;
 interface
 
 uses
-  Classes, SysUtils, OpenSSL.libeay32, OpenSSL.Core, IdSSLOpenSSLHeaders;
+  System.Classes, System.SysUtils, OpenSSL.libeay32, OpenSSL.Core, IdSSLOpenSSLHeaders;
 
 type
   TX509Cerificate = class;

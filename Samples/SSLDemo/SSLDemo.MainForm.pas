@@ -25,9 +25,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask,
-  JvExMask, JvToolEdit;
+  System.Classes, Vcl.StdCtrls, Vcl.Controls, Vcl.Forms;
 
 type
   TMainForm = class(TForm)
