@@ -1,0 +1,14 @@
+syntax: glob
+*.dcu
+*.local
+*.exe
+*.identcache
+__history
+*.~*
+*.map
+*.stat
+TestData/.rnd
+*.pem
+*.txt
+*.certcry
+*.keycry
