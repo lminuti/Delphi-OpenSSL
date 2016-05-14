@@ -8,11 +8,9 @@
 
 Delphi OpenSSL offers an API to Encrypt/Decrypt
 
-<pre>
-OpenSSL rsautl -encrypt -certin -inkey publiccert.pem -in test.txt -out test.txt.cry
-OpenSSL rsautl -encrypt -pubin -inkey publickey.pem -in test.txt -out test.txt.cry
-OpenSSL rsautl -decrypt -inkey privatekey.pem -in test.txt.cry -out test.txt
-</pre>
+    OpenSSL rsautl -encrypt -certin -inkey publiccert.pem -in test.txt -out test.txt.cry
+    OpenSSL rsautl -encrypt -pubin -inkey publickey.pem -in test.txt -out test.txt.cry
+    OpenSSL rsautl -decrypt -inkey privatekey.pem -in test.txt.cry -out test.txt
 
 ## Todo
 
