@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 0
   Caption = 'SSLDemo'
   ClientHeight = 398
-  ClientWidth = 691
+  ClientWidth = 599
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -45,51 +45,93 @@ object MainForm: TMainForm
   object Label2: TLabel
     Left = 24
     Top = 16
-    Width = 240
+    Width = 277
     Height = 13
     Caption = '1. Install OPENSSL and add it to your system path'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object Label3: TLabel
     Left = 24
     Top = 35
-    Width = 252
+    Width = 291
     Height = 13
     Caption = '2. Go to the testdata folder and run create_cert.bat'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object Label4: TLabel
     Left = 24
     Top = 54
-    Width = 201
+    Width = 217
     Height = 13
-    Caption = '3. Check the the following file are created'
+    Caption = '3. Check the following files are created'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object Label5: TLabel
     Left = 24
     Top = 168
-    Width = 106
+    Width = 122
     Height = 13
     Caption = '4. Generate a test file'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object Label6: TLabel
     Left = 24
     Top = 224
-    Width = 171
+    Width = 199
     Height = 13
     Caption = '5. Try to encrypt with the cerificate'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object Label7: TLabel
     Left = 24
     Top = 274
-    Width = 181
+    Width = 211
     Height = 13
     Caption = '6. Try to decrypt with the private key'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object Label8: TLabel
     Left = 24
     Top = 324
-    Width = 174
+    Width = 203
     Height = 13
     Caption = '5. Try to encrypt with the public key'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
   end
   object edtTextToCrypt: TEdit
     Left = 136
@@ -104,16 +146,15 @@ object MainForm: TMainForm
     Width = 435
     Height = 21
     TabOrder = 1
-    Text = 'edtCertFile'
   end
-  object Button1: TButton
+  object btnCryptWithKey: TButton
     Left = 24
     Top = 344
     Width = 131
     Height = 25
     Caption = 'Public Crypt'
     TabOrder = 2
-    OnClick = Button1Click
+    OnClick = btnCryptWithKeyClick
   end
   object edtPriv: TEdit
     Left = 136
@@ -121,16 +162,15 @@ object MainForm: TMainForm
     Width = 435
     Height = 21
     TabOrder = 3
-    Text = 'edtCertFile'
   end
-  object Button2: TButton
+  object btnDecryptWithKey: TButton
     Left = 24
     Top = 293
     Width = 131
     Height = 25
     Caption = 'Private decrypt'
     TabOrder = 4
-    OnClick = Button2Click
+    OnClick = btnDecryptWithKeyClick
   end
   object edtPub: TEdit
     Left = 136
@@ -138,24 +178,23 @@ object MainForm: TMainForm
     Width = 435
     Height = 21
     TabOrder = 5
-    Text = 'edtCertFile'
   end
-  object Button3: TButton
+  object btnCryptWithCert: TButton
     Left = 24
     Top = 243
     Width = 131
     Height = 25
     Caption = 'Public Crypt with cert'
     TabOrder = 6
-    OnClick = Button3Click
+    OnClick = btnCryptWithCertClick
   end
-  object Button4: TButton
+  object btnGenerateSampleFile: TButton
     Left = 495
     Top = 190
     Width = 75
     Height = 25
     Caption = 'Generate'
     TabOrder = 7
-    OnClick = Button4Click
+    OnClick = btnGenerateSampleFileClick
   end
 end

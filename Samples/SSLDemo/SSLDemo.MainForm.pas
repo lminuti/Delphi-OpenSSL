@@ -35,26 +35,26 @@ type
     lblTextToCrypt: TLabel;
     lblCertPath: TLabel;
     edtCertFile: TEdit;
-    Button1: TButton;
+    btnCryptWithKey: TButton;
     lblPriv: TLabel;
     edtPriv: TEdit;
-    Button2: TButton;
+    btnDecryptWithKey: TButton;
     Label1: TLabel;
     edtPub: TEdit;
-    Button3: TButton;
+    btnCryptWithCert: TButton;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
-    Button4: TButton;
+    btnGenerateSampleFile: TButton;
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
     procedure FormCreate(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
-    procedure Button2Click(Sender: TObject);
-    procedure Button3Click(Sender: TObject);
-    procedure Button4Click(Sender: TObject);
+    procedure btnCryptWithKeyClick(Sender: TObject);
+    procedure btnDecryptWithKeyClick(Sender: TObject);
+    procedure btnCryptWithCertClick(Sender: TObject);
+    procedure btnGenerateSampleFileClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -73,7 +73,7 @@ uses
 
 { TMainForm }
 
-procedure TMainForm.Button1Click(Sender: TObject);
+procedure TMainForm.btnCryptWithKeyClick(Sender: TObject);
 var
   RSAUtil :TRSAUtil;
 begin
@@ -86,7 +86,7 @@ begin
   end;
 end;
 
-procedure TMainForm.Button2Click(Sender: TObject);
+procedure TMainForm.btnDecryptWithKeyClick(Sender: TObject);
 var
   RSAUtil :TRSAUtil;
 begin
@@ -99,7 +99,7 @@ begin
   end;
 end;
 
-procedure TMainForm.Button3Click(Sender: TObject);
+procedure TMainForm.btnCryptWithCertClick(Sender: TObject);
 var
   RSAUtil :TRSAUtil;
   Cerificate :TX509Cerificate;
@@ -119,7 +119,7 @@ begin
   end;
 end;
 
-procedure TMainForm.Button4Click(Sender: TObject);
+procedure TMainForm.btnGenerateSampleFileClick(Sender: TObject);
 var
   SL :TStringList;
 begin
