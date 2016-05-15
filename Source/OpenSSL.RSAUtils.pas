@@ -32,8 +32,15 @@ type
 
   TPassphraseEvent = procedure (Sender :TObject; var Passphrase :string) of object;
 
+  TRSAKey = class(TOpenSLLBase)
+  public
+    function IsValid :Boolean; virtual; abstract;
+    procedure LoadFromFile(const FileName :string); virtual; abstract;
+    procedure LoadFromStream(AStream :TStream); virtual; abstract;
+  end;
+
   // RSA public key
-  TRSAPublicKey = class(TOpenSLLBase)
+  TRSAPublicKey = class(TRSAKey)
   private
     FRSA :PRSA;
     FCerificate :TX509Cerificate;
@@ -42,13 +49,14 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
-    function IsValid :Boolean;
-    procedure LoadFromFile(const FileName :string);
+    function IsValid :Boolean; override;
+    procedure LoadFromFile(const FileName :string); override;
+    procedure LoadFromStream(AStream :TStream); override;
     procedure LoadFromCertificate(Cerificate :TX509Cerificate);
   end;
 
   // RSA private key
-  TRSAPrivateKey = class(TOpenSLLBase)
+  TRSAPrivateKey = class(TRSAKey)
   private
     FRSA :PRSA;
     FOnNeedPassphrase: TPassphraseEvent;
@@ -57,8 +65,9 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
-    function IsValid :Boolean;
-    procedure LoadFromFile(const FileName :string);
+    function IsValid :Boolean; override;
+    procedure LoadFromFile(const FileName :string); override;
+    procedure LoadFromStream(AStream :TStream); override;
     property OnNeedPassphrase :TPassphraseEvent read FOnNeedPassphrase write FOnNeedPassphrase;
   end;
 
@@ -76,6 +85,7 @@ type
 
     function IsValid :Boolean;
     procedure LoadFromFile(const FileName :string);
+    procedure LoadFromStream(AStream :TStream);
   end;
 
   TRSAUtil = class(TOpenSLLBase)
@@ -100,6 +110,32 @@ implementation
 
 const
   PaddingMap : array [TRASPadding] of Integer = (RSA_PKCS1_PADDING, RSA_PKCS1_OAEP_PADDING, RSA_SSLV23_PADDING, RSA_NO_PADDING);
+
+// rwflag is a flag set to 0 when reading and 1 when writing
+// The u parameter has the same value as the u parameter passed to the PEM routines
+function ReadKeyCallback(buf: PAnsiChar; buffsize: integer; rwflag: integer; u: pointer): integer; cdecl;
+var
+  Len :Integer;
+  Password :string;
+  PrivateKey :TRSAPrivateKey;
+begin
+  Result := 0;
+  if Assigned(u) then
+  begin
+    PrivateKey := TRSAPrivateKey(u);
+    if Assigned(PrivateKey.FOnNeedPassphrase) then
+    begin
+      PrivateKey.FOnNeedPassphrase(PrivateKey, Password);
+      if Length(Password) < buffsize then
+        Len := Length(Password)
+      else
+        Len := buffsize;
+      System.AnsiStrings.StrPLCopy(buf, AnsiString(Password), Len);
+      Result := Len;
+    end;
+  end;
+end;
+
 
 procedure TRSAUtil.PublicEncrypt(InputStream, OutputStream: TStream; Padding: TRASPadding);
 var
@@ -255,23 +291,37 @@ end;
 procedure TX509Cerificate.LoadFromFile(const FileName: string);
 var
   KeyFile :pBIO;
-//  PubKey: pEVP_PKEY;
 begin
   FreeRSA;
   FreeX509;
   KeyFile := BIO_new(BIO_s_file());
-  if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
-    RaiseOpenSSLError('X509 load file error');
-  FX509 := PEM_read_bio_X509(KeyFile, nil, nil, nil);
-  if not Assigned(FX509) then
-    RaiseOpenSSLError('X509 load certificate error');
-//  PubKey := X509_get_pubkey(FX509);
-//  try
-//    FRSA := EVP_PKEY_get1_RSA(PubKey);
-//  finally
-//    EVP_PKEY_free(PubKey);
-//  end;
+  try
+    if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
+      RaiseOpenSSLError('X509 load file error');
+    FX509 := PEM_read_bio_X509(KeyFile, nil, nil, nil);
+    if not Assigned(FX509) then
+      RaiseOpenSSLError('X509 load certificate error');
+  finally
+    BIO_free(KeyFile);
+  end;
+end;
 
+procedure TX509Cerificate.LoadFromStream(AStream: TStream);
+var
+  KeyFile :pBIO;
+begin
+  FreeRSA;
+  FreeX509;
+  KeyFile := BIO_new_from_stream(AStream);
+  if KeyFile = nil then
+    RaiseOpenSSLError('X509 load stream error');
+  try
+    FX509 := PEM_read_bio_X509(KeyFile, nil, nil, nil);
+    if not Assigned(FX509) then
+      RaiseOpenSSLError('X509 load certificate error');
+  finally
+    BIO_free(KeyFile);
+  end;
 end;
 
 { TRSAPrivateKey }
@@ -313,44 +363,42 @@ end;
 procedure TRSAPrivateKey.LoadFromFile(const FileName: string);
 var
   KeyFile :pBIO;
-
-  // rwflag is a flag set to 0 when reading and 1 when writing
-  // The u parameter has the same value as the u parameter passed to the PEM routines
-  function cb(buf: PAnsiChar; buffsize: integer; rwflag: integer; u: pointer): integer; cdecl;
-  var
-    Len :Integer;
-    Password :string;
-    PrivateKey :TRSAPrivateKey;
-  begin
-    Result := 0;
-    if Assigned(u) then
-    begin
-      PrivateKey := TRSAPrivateKey(u);
-      if Assigned(PrivateKey.FOnNeedPassphrase) then
-      begin
-        PrivateKey.FOnNeedPassphrase(PrivateKey, Password);
-        if Length(Password) < buffsize then
-          Len := Length(Password)
-        else
-          Len := buffsize;
-        System.AnsiStrings.StrPLCopy(buf, AnsiString(Password), Len);
-        Result := Len;
-      end;
-    end;
-  end;
-
+  cb : ppem_password_cb;
 begin
+  cb := nil;
   KeyFile := BIO_new(BIO_s_file());
 
   // TODO: On Windows BIO_new_files reserves for the filename argument to be UTF-8 encoded
   if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
     RaiseOpenSSLError('RSA load file error');
   try
-    FRSA := PEM_read_bio_RSAPrivateKey(KeyFile, nil, @cb, Self);
+    if Assigned(FOnNeedPassphrase) then
+      cb := @ReadKeyCallback;
+    FRSA := PEM_read_bio_RSAPrivateKey(KeyFile, nil, cb, Self);
     if not Assigned(FRSA) then
       RaiseOpenSSLError('RSA load private key error');
   finally
     BIO_free(KeyFile);
+  end;
+end;
+
+procedure TRSAPrivateKey.LoadFromStream(AStream: TStream);
+var
+  KeyBuffer :pBIO;
+  cb : ppem_password_cb;
+begin
+  cb := nil;
+  KeyBuffer := BIO_new_from_stream(AStream);
+  if KeyBuffer = nil then
+    RaiseOpenSSLError('RSA load stream error');
+  try
+    if Assigned(FOnNeedPassphrase) then
+      cb := @ReadKeyCallback;
+    FRSA := PEM_read_bio_RSAPrivateKey(KeyBuffer, nil, cb, Self);
+    if not Assigned(FRSA) then
+      RaiseOpenSSLError('RSA load private key error');
+  finally
+    BIO_free(KeyBuffer);
   end;
 end;
 
@@ -411,7 +459,7 @@ begin
 //      RaiseOpenSSLError('RSA load public key error');
     pKey := PEM_read_bio_PUBKEY(KeyFile, nil, nil, nil);
     if not Assigned(pKey) then
-      RaiseOpenSSLError('RSA load public key error');
+      RaiseOpenSSLError('PUBKEY load public key error');
 
     try
       FRSA := EVP_PKEY_get1_RSA(pKey);
@@ -423,6 +471,36 @@ begin
     end;
   finally
     BIO_free(KeyFile);
+  end;
+end;
+
+procedure TRSAPublicKey.LoadFromStream(AStream: TStream);
+var
+  KeyBuffer :pBIO;
+  pKey :PEVP_PKEY;
+begin
+  KeyBuffer := BIO_new_from_stream(AStream);
+  if KeyBuffer = nil then
+    RaiseOpenSSLError('RSA load stream error');
+  try
+// Does'n work
+//    FRSA := PEM_read_bio_RSAPublicKey(KeyFile, nil, nil, nil);
+//    if not Assigned(FRSA) then
+//      RaiseOpenSSLError('RSA load public key error');
+    pKey := PEM_read_bio_PUBKEY(KeyBuffer, nil, nil, nil);
+    if not Assigned(pKey) then
+      RaiseOpenSSLError('PUBKEY load public key error');
+
+    try
+      FRSA := EVP_PKEY_get1_RSA(pKey);
+
+      if not Assigned(FRSA) then
+        RaiseOpenSSLError('RSA load public key error');
+    finally
+      EVP_PKEY_free(pKey);
+    end;
+  finally
+    BIO_free(KeyBuffer);
   end;
 end;
 

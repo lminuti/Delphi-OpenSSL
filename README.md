@@ -14,9 +14,13 @@ Delphi OpenSSL offers an API to Encrypt/Decrypt
 
 ## Todo
 
-- Read certificate from a buffer
-- Sign e verify
 - Symmetric cryptography
+- compute hash functions
+- Sign e verify
+- Generation of pseudo-random bit strings
+- RSA data management
+- Data managing for X509
+- Manage information according to the PKCS #12 standard
 
 ## Prerequisite
 OpenSSL library must be in your system path

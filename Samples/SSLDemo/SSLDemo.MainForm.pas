@@ -25,36 +25,17 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
-  System.Classes, Vcl.StdCtrls, Vcl.Controls, Vcl.Forms, Vcl.Dialogs;
+  System.Classes, Vcl.StdCtrls, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  Vcl.ComCtrls;
 
 type
   TMainForm = class(TForm)
-    edtTextToCrypt: TEdit;
-    lblTextToCrypt: TLabel;
-    lblCertPath: TLabel;
-    edtCertFile: TEdit;
-    btnCryptWithKey: TButton;
-    lblPriv: TLabel;
-    edtPriv: TEdit;
-    btnDecryptWithKey: TButton;
-    Label1: TLabel;
-    edtPub: TEdit;
-    btnCryptWithCert: TButton;
-    Label2: TLabel;
-    Label3: TLabel;
-    Label4: TLabel;
-    Label5: TLabel;
-    btnGenerateSampleFile: TButton;
-    Label6: TLabel;
-    Label7: TLabel;
-    Label8: TLabel;
+    pgcMain: TPageControl;
+    tabTutorial: TTabSheet;
+    tabRSABuffer: TTabSheet;
     procedure FormCreate(Sender: TObject);
-    procedure btnCryptWithKeyClick(Sender: TObject);
-    procedure btnDecryptWithKeyClick(Sender: TObject);
-    procedure btnCryptWithCertClick(Sender: TObject);
-    procedure btnGenerateSampleFileClick(Sender: TObject);
   private
-    procedure PassphraseReader(Sender :TObject; var Passphrase :string);
+    { Private declarations }
   public
     { Public declarations }
   end;
@@ -67,85 +48,22 @@ implementation
 {$R *.dfm}
 
 uses
-  OpenSSL.RSAUtils;
+  SSLDemo.MainFrame, SSLDemo.RSABufferFrame;
 
 { TMainForm }
 
-procedure TMainForm.btnCryptWithKeyClick(Sender: TObject);
-var
-  RSAUtil :TRSAUtil;
-begin
-  RSAUtil := TRSAUtil.Create;
-  try
-    RSAUtil.PublicKey.LoadFromFile(edtPub.Text);
-    RSAUtil.PublicEncrypt(edtTextToCrypt.Text, edtTextToCrypt.Text + '.keycry');
-  finally
-    RSAUtil.Free;
-  end;
-end;
-
-procedure TMainForm.btnDecryptWithKeyClick(Sender: TObject);
-var
-  RSAUtil :TRSAUtil;
-begin
-  RSAUtil := TRSAUtil.Create;
-  try
-    RSAUtil.PrivateKey.OnNeedPassphrase := PassphraseReader;
-    RSAUtil.PrivateKey.LoadFromFile(edtPriv.Text);
-    RSAUtil.PrivateDecrypt(edtTextToCrypt.Text + '.certcry', edtTextToCrypt.Text + '.certdecry.txt');
-  finally
-    RSAUtil.Free;
-  end;
-end;
-
-procedure TMainForm.btnCryptWithCertClick(Sender: TObject);
-var
-  RSAUtil :TRSAUtil;
-  Cerificate :TX509Cerificate;
-begin
-  RSAUtil := TRSAUtil.Create;
-  try
-    Cerificate := TX509Cerificate.Create;
-    try
-      Cerificate.LoadFromFile(edtCertFile.Text);
-      RSAUtil.PublicKey.LoadFromCertificate(Cerificate);
-      RSAUtil.PublicEncrypt(edtTextToCrypt.Text, edtTextToCrypt.Text + '.certcry');
-    finally
-      Cerificate.Free;
-    end;
-  finally
-    RSAUtil.Free;
-  end;
-end;
-
-procedure TMainForm.btnGenerateSampleFileClick(Sender: TObject);
-var
-  SL :TStringList;
-begin
-  SL := TStringList.Create;
-  try
-    SL.Text := 'Hello, world!';
-    SL.SaveToFile(edtTextToCrypt.Text);
-  finally
-    SL.Free;
-  end;
-end;
-
 procedure TMainForm.FormCreate(Sender: TObject);
 var
-  TestFolder :string;
+  MainFrame: TMainFrame;
+  RSABufferFrame :TRSABufferFrame;
 begin
-  TestFolder := StringReplace(ExtractFilePath(ParamStr(0)), 'Samples\SSLDemo', 'TestData', [rfReplaceAll, rfIgnoreCase]);
+  pgcMain.ActivePageIndex := 0;
 
-  edtCertFile.Text := TestFolder + 'publiccert.pem';
-  edtPriv.Text := TestFolder + 'privatekey.pem';
-  edtPub.Text := TestFolder + 'publickey.pem';
-  edtTextToCrypt.Text := TestFolder + 'test.txt';
-end;
+  MainFrame := TMainFrame.Create(Application);
+  MainFrame.Parent := tabTutorial;
 
-procedure TMainForm.PassphraseReader(Sender: TObject; var Passphrase: string);
-begin
-  Passphrase := InputBox(Name, 'Passphrase', '');
+  RSABufferFrame := TRSABufferFrame.Create(Application);
+  RSABufferFrame.Parent := tabRSABuffer;
 end;
 
 end.
