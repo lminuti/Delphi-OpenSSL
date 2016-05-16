@@ -24,7 +24,7 @@ unit OpenSSL.Core;
 interface
 
 uses
-  System.Classes, System.SysUtils;
+  System.Classes, System.SysUtils, IdSSLOpenSSLHeaders, OpenSSL.libeay32;
 
 type
   TRASPadding = (
@@ -49,16 +49,45 @@ type
     constructor Create; virtual;
   end;
 
+const
+  SALT_MAGIC: AnsiString = 'Salted__';
+  SALT_MAGIC_LEN: integer = 8;
+  SALT_SIZE = 8;
+
 function GetOpenSSLErrorMessage: string;
 
 function OpenSSLEncodeFileName(const FileName :string) :PAnsiChar;
 
 procedure RaiseOpenSSLError(const AMessage :string = '');
 
+function EVP_GetSalt: TBytes;
+
+procedure EVP_GetKeyIV(APassword: TBytes; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes); overload;
+
+// Password will be encoded in UTF-8 if you want another encodig use the TBytes version
+procedure EVP_GetKeyIV(APassword: string; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes); overload;
+
 implementation
 
-uses
-  IdSSLOpenSSLHeaders, OpenSSL.libeay32;
+
+function EVP_GetSalt: TBytes;
+begin
+  SetLength(result, PKCS5_SALT_LEN);
+  RAND_pseudo_bytes(@result[0], PKCS5_SALT_LEN);
+end;
+
+procedure EVP_GetKeyIV(APassword: TBytes; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes);
+begin
+  SetLength(Key, EVP_MAX_KEY_LENGTH);
+  SetLength(iv, EVP_MAX_IV_LENGTH);
+
+  EVP_BytesToKey(ACipher,EVP_md5, @ASalt[0] ,@APassword[0]  , Length(APassword),1, @Key[0], @IV[0]);
+end;
+
+procedure EVP_GetKeyIV(APassword: string; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes);
+begin
+  EVP_GetKeyIV(TEncoding.UTF8.GetBytes(APassword), ACipher, ASalt, Key, IV);
+end;
 
 function OpenSSLEncodeFileName(const FileName :string) :PAnsiChar;
 var

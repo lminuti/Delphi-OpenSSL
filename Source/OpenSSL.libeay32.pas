@@ -29,6 +29,10 @@ uses
 var
   X509_get_pubkey : function (a: pX509): pEVP_PKEY; cdecl;
   BIO_free_all : procedure (a: pBIO); cdecl;
+  EVP_BytesToKey : function (cipher_type: PEVP_CIPHER; md: PEVP_MD; salt: PByte; data: PByte; datal: integer; count: integer; key: PByte; iv: PByte): integer; cdecl;
+  EVP_DecryptUpdate : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer; cdecl;
+  EVP_DecryptFinal : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer; cdecl;
+  EVP_DecryptFinal_ex : function(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer cdecl = nil;
 
 //  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 //
@@ -84,6 +88,10 @@ begin
     X509_get_pubkey := GetProcAddress(hSSL, 'X509_get_pubkey');
     BIO_free_all := GetProcAddress(hSSL, 'BIO_free_all');
     PEM_read_bio_PUBKEY := GetProcAddress(hSSL, 'PEM_read_bio_PUBKEY');
+    EVP_BytesToKey := GetProcAddress(hSSL, 'EVP_BytesToKey');
+    EVP_DecryptUpdate := GetProcAddress(hSSL, 'EVP_DecryptUpdate');
+    EVP_DecryptFinal := GetProcAddress(hSSL, 'EVP_DecryptFinal');
+    EVP_DecryptFinal_ex := GetProcAddress(hSSL, 'EVP_DecryptFinal_ex');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;
@@ -105,6 +113,10 @@ begin
   X509_get_pubkey := nil;
   BIO_free_all := nil;
   PEM_read_bio_PUBKEY := nil;
+  EVP_BytesToKey := nil;
+  EVP_DecryptUpdate := nil;
+  EVP_DecryptFinal := nil;
+  EVP_DecryptFinal_ex := nil;
 end;
 
 initialization

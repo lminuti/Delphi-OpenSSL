@@ -25,7 +25,8 @@ uses
   Vcl.Forms,
   SSLDemo.MainForm in 'SSLDemo.MainForm.pas' {MainForm},
   SSLDemo.MainFrame in 'SSLDemo.MainFrame.pas' {MainFrame: TFrame},
-  SSLDemo.RSABufferFrame in 'SSLDemo.RSABufferFrame.pas' {RSABufferFrame: TFrame};
+  SSLDemo.RSABufferFrame in 'SSLDemo.RSABufferFrame.pas' {RSABufferFrame: TFrame},
+  SSLDemo.EncFrame in 'SSLDemo.EncFrame.pas' {EncFrame: TFrame};
 
 {$R *.res}
 

@@ -14,7 +14,7 @@ Delphi OpenSSL offers an API to Encrypt/Decrypt
 
 ## Todo
 
-- Symmetric cryptography
+- Symmetric cryptography (partially done)
 - compute hash functions
 - Sign e verify
 - Generation of pseudo-random bit strings

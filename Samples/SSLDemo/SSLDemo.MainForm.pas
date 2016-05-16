@@ -33,6 +33,7 @@ type
     pgcMain: TPageControl;
     tabTutorial: TTabSheet;
     tabRSABuffer: TTabSheet;
+    tabEncryption: TTabSheet;
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
@@ -48,7 +49,7 @@ implementation
 {$R *.dfm}
 
 uses
-  SSLDemo.MainFrame, SSLDemo.RSABufferFrame;
+  SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame;
 
 { TMainForm }
 
@@ -56,6 +57,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   MainFrame: TMainFrame;
   RSABufferFrame :TRSABufferFrame;
+  EncFrame :TEncFrame;
 begin
   pgcMain.ActivePageIndex := 0;
 
@@ -64,6 +66,9 @@ begin
 
   RSABufferFrame := TRSABufferFrame.Create(Application);
   RSABufferFrame.Parent := tabRSABuffer;
+
+  EncFrame := TEncFrame.Create(Application);
+  EncFrame.Parent := tabEncryption;
 end;
 
 end.

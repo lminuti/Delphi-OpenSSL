@@ -19,20 +19,21 @@ object MainForm: TMainForm
     Top = 0
     Width = 613
     Height = 544
-    ActivePage = tabRSABuffer
+    ActivePage = tabEncryption
     Align = alClient
     TabOrder = 0
-    ExplicitHeight = 445
     object tabTutorial: TTabSheet
       Caption = 'Tutorial'
-      ExplicitWidth = 591
-      ExplicitHeight = 370
     end
     object tabRSABuffer: TTabSheet
       Caption = 'RSABuffer'
       ImageIndex = 1
-      ExplicitWidth = 591
-      ExplicitHeight = 370
+    end
+    object tabEncryption: TTabSheet
+      Caption = 'Encryption'
+      ImageIndex = 2
+      ExplicitLeft = 8
+      ExplicitTop = 28
     end
   end
 end
