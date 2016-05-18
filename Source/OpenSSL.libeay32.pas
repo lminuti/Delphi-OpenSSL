@@ -28,16 +28,22 @@ uses
 
 var
   X509_get_pubkey : function (a: pX509): pEVP_PKEY; cdecl;
-  BIO_free_all : procedure (a: pBIO); cdecl;
+
   EVP_BytesToKey : function (cipher_type: PEVP_CIPHER; md: PEVP_MD; salt: PByte; data: PByte; datal: integer; count: integer; key: PByte; iv: PByte): integer; cdecl;
   EVP_DecryptUpdate : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer; cdecl;
   EVP_DecryptFinal : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer; cdecl;
   EVP_DecryptFinal_ex : function(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer cdecl = nil;
 
+  BIO_free_all : procedure (a: pBIO); cdecl;
+  BIO_push : function (b :pBIO; append :pBIO) :pBIO; cdecl;
+  BIO_pop : function (b :pBIO) :pBIO; cdecl;
+  BIO_set_next : function (b :pBIO; next :pBIO) :pBIO; cdecl;
+
 //  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 //
   PEM_read_bio_PUBKEY : function(bp : PBIO; x : PPEVP_PKEY; cb : ppem_password_cb; u: Pointer) : PEVP_PKEY cdecl;
 
+function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 
 function LoadOpenSSLLibraryEx :Boolean;
 
@@ -59,6 +65,11 @@ var
 //function X509_get_pubkey(a: pX509): pEVP_PKEY; cdecl; external LIBEAY_DLL_NAME;
 //
 //procedure BIO_free_all(a: pBIO); cdecl; external LIBEAY_DLL_NAME;
+
+function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
+begin
+  Result := BIO_ctrl(b,BIO_CTRL_INFO,0,pp);
+end;
 
 procedure OPENSSL_free(address: pointer);
 begin
@@ -92,6 +103,9 @@ begin
     EVP_DecryptUpdate := GetProcAddress(hSSL, 'EVP_DecryptUpdate');
     EVP_DecryptFinal := GetProcAddress(hSSL, 'EVP_DecryptFinal');
     EVP_DecryptFinal_ex := GetProcAddress(hSSL, 'EVP_DecryptFinal_ex');
+    BIO_push := GetProcAddress(hSSL, 'BIO_push');
+    BIO_pop := GetProcAddress(hSSL, 'BIO_pop');
+    BIO_set_next := GetProcAddress(hSSL, 'BIO_set_next');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;
@@ -117,6 +131,9 @@ begin
   EVP_DecryptUpdate := nil;
   EVP_DecryptFinal := nil;
   EVP_DecryptFinal_ex := nil;
+  BIO_push := nil;
+  BIO_pop := nil;
+  BIO_set_next := nil;
 end;
 
 initialization

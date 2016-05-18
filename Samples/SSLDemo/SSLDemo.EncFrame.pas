@@ -15,8 +15,11 @@ type
     Label2: TLabel;
     edtInputFileName: TEdit;
     edtOutputFileName: TEdit;
+    chkBase64: TCheckBox;
+    BtnGenrateFile: TButton;
     procedure btnEncryptClick(Sender: TObject);
     procedure btnDecryptClick(Sender: TObject);
+    procedure BtnGenrateFileClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -34,14 +37,19 @@ procedure TEncFrame.btnEncryptClick(Sender: TObject);
 var
   EncUtil :TEncUtil;
 begin
-  memTest.Lines.SaveToFile(edtInputFileName.Text);
   EncUtil := TEncUtil.Create;
   try
+    EncUtil.UseBase64 := chkBase64.Checked;
     EncUtil.Passphrase := InputBox(Name, 'password', '');
     EncUtil.Encrypt(edtInputFileName.Text, edtOutputFileName.Text);
   finally
     EncUtil.Free;
   end;
+end;
+
+procedure TEncFrame.BtnGenrateFileClick(Sender: TObject);
+begin
+  memTest.Lines.SaveToFile(edtInputFileName.Text);
 end;
 
 constructor TEncFrame.Create(AOwner: TComponent);
@@ -61,6 +69,7 @@ var
 begin
   EncUtil := TEncUtil.Create;
   try
+    EncUtil.UseBase64 := chkBase64.Checked;
     EncUtil.Passphrase := InputBox(Name, 'password', '');
     EncUtil.Decrypt(edtOutputFileName.Text, edtInputFileName.Text);
   finally

@@ -35,12 +35,16 @@ type
   TEncUtil = class(TOpenSLLBase)
   private
     FPassphrase: TBytes;
+    FBase64: Boolean;
     function GetPassphrase: string;
     procedure SetPassphrase(const Value: string);
   public
     // will be encoded in UTF8
     property Passphrase :string read GetPassphrase write SetPassphrase;
     property BinaryPassphrase :TBytes read FPassphrase write FPassphrase;
+
+    // Apply a further base64 encoding to the encrypted buffer
+    property UseBase64 :Boolean read FBase64 write FBase64;
 
     procedure Encrypt(InputStream :TStream; OutputStream :TStream); overload;
     procedure Encrypt(const InputFileName, OutputFileName :TFileName); overload;
@@ -60,9 +64,8 @@ var
 
   InputBuffer :TBytes;
   OutputLen :Integer;
-//  PaddingLen :Integer;
   OutputBuffer :TBytes;
-//  PaddingBuffer :TBytes;
+  Base64Buffer :TBytes;
 
   Cipher: PEVP_CIPHER;
   Salt :TBytes;
@@ -70,8 +73,18 @@ var
   InputStart :Integer;
 begin
   Cipher := EVP_aes_256_cbc();
-  SetLength(InputBuffer, InputStream.Size);
-  InputStream.ReadBuffer(InputBuffer[0], InputStream.Size);
+
+  if FBase64 then
+  begin
+    SetLength(Base64Buffer, InputStream.Size);
+    InputStream.ReadBuffer(Base64Buffer[0], InputStream.Size);
+    InputBuffer := Base64Decode(Base64Buffer);
+  end
+  else
+  begin
+    SetLength(InputBuffer, InputStream.Size);
+    InputStream.ReadBuffer(InputBuffer[0], InputStream.Size);
+  end;
 
   SetLength(Salt, SALT_SIZE);
   // First read the magic text and the Salt - if any
@@ -123,6 +136,7 @@ var
   InputBuffer :TBytes;
   OutputLen :Integer;
   OutputBuffer :TBytes;
+  Base64Buffer :TBytes;
   Salt :TBytes;
 
   cipher: PEVP_CIPHER;
@@ -170,7 +184,15 @@ begin
     SetLength(OutputBuffer, BuffStart);
 
     if BuffStart > 0 then
-      OutputStream.WriteBuffer(OutputBuffer[0], BuffStart);
+    begin
+      if FBase64 then
+      begin
+        Base64Buffer := Base64Encode(OutputBuffer);
+        OutputStream.WriteBuffer(Base64Buffer[0], Length(Base64Buffer));
+      end
+      else
+        OutputStream.WriteBuffer(OutputBuffer[0], BuffStart);
+    end;
 
   finally
     EVP_CIPHER_CTX_free(Context);

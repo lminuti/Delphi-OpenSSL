@@ -67,7 +67,53 @@ procedure EVP_GetKeyIV(APassword: TBytes; ACipher: PEVP_CIPHER; const ASalt: TBy
 // Password will be encoded in UTF-8 if you want another encodig use the TBytes version
 procedure EVP_GetKeyIV(APassword: string; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes); overload;
 
+function Base64Encode(InputBuffer :TBytes) :TBytes;
+function Base64Decode(InputBuffer :TBytes) :TBytes;
+
 implementation
+
+function Base64Encode(InputBuffer :TBytes) :TBytes;
+var
+  bio, b64 :PBIO;
+  bdata :Pointer;
+  datalen :Integer;
+begin
+  b64 := BIO_new(BIO_f_base64());
+  bio := BIO_new(BIO_s_mem());
+  BIO_push(b64, bio);
+
+  BIO_write(b64, @InputBuffer[0], Length(InputBuffer));
+  BIO_flush(b64);
+
+  bdata := nil;
+  datalen :=  OpenSSL.libeay32.BIO_get_mem_data(bio, @bdata);
+  SetLength(Result, datalen);
+  Move(bdata^, Result[0], datalen);
+
+  BIO_free_all(b64);
+end;
+
+function Base64Decode(InputBuffer :TBytes) :TBytes;
+var
+  bio, b64 :PBIO;
+  datalen :Integer;
+begin
+  b64 := BIO_new(BIO_f_base64());
+  bio := BIO_new_mem_buf(InputBuffer, Length(InputBuffer));
+  try
+    BIO_push(b64, bio);
+
+    SetLength(Result, Length(InputBuffer));
+    datalen := BIO_read(b64, @Result[0], Length(InputBuffer));
+    if datalen < 0 then
+      RaiseOpenSSLError('Base64 error');
+
+    SetLength(Result, datalen);
+    BIO_flush(b64);
+  finally
+    BIO_free_all(b64);
+  end;
+end;
 
 
 function EVP_GetSalt: TBytes;
