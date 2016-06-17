@@ -46,6 +46,7 @@ type
 
   TOpenSLLBase = class
   public
+    class procedure CheckOpenSSLLibrary; static;
     constructor Create; virtual;
   end;
 
@@ -165,18 +166,18 @@ begin
   raise EOpenSSLLibError.Create(ErrCode, FullMsg);
 end;
 
-procedure CheckOpenSSLLibrary;
-begin
-  if not LoadOpenSSLLibraryEx then
-    raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
-end;
-
 { TOpenSLLBase }
 
 constructor TOpenSLLBase.Create;
 begin
   inherited;
   CheckOpenSSLLibrary;
+end;
+
+class procedure TOpenSLLBase.CheckOpenSSLLibrary;
+begin
+  if not LoadOpenSSLLibraryEx then
+    raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 end;
 
 { EOpenSSLLibError }

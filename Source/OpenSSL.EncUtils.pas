@@ -43,7 +43,9 @@ type
 
   TEncUtil = class(TOpenSLLBase)
   private
-    class var FCipherList :TList<TCipherInfo>;
+    class var
+    FCipherList :TList<TCipherInfo>;
+    FChipherLoaded :Integer;
     class constructor Create;
     class destructor Destroy;
   private
@@ -263,8 +265,9 @@ end;
 
 class procedure TEncUtil.RegisterDefaultCiphers;
 begin
-  if FCipherList.Count > 0 then
-    Exit;
+  CheckOpenSSLLibrary;
+  if AtomicCmpExchange(FChipherLoaded, 1, 0) = 0 then
+  begin
 
   // AES
   RegisterCipher('AES', EVP_aes_256_cbc);
@@ -352,6 +355,7 @@ begin
   RegisterCipher('RC4', EVP_rc4);
   RegisterCipher('RC4-40', EVP_rc4_40);
 
+  end;
 end;
 
 procedure TEncUtil.SetCipher(const Value: TCipherName);
