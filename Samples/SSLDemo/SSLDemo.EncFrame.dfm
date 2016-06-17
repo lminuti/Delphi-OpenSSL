@@ -2,11 +2,11 @@ object EncFrame: TEncFrame
   Left = 0
   Top = 0
   Width = 388
-  Height = 266
+  Height = 287
   TabOrder = 0
   DesignSize = (
     388
-    266)
+    287)
   object Label1: TLabel
     Left = 3
     Top = 131
@@ -17,15 +17,21 @@ object EncFrame: TEncFrame
   object Label2: TLabel
     Left = 3
     Top = 158
-    Width = 123
+    Width = 55
     Height = 13
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Output file:'
-    ExplicitWidth = 55
+  end
+  object Label3: TLabel
+    Left = 3
+    Top = 185
+    Width = 31
+    Height = 13
+    Caption = 'Cipher'
   end
   object btnEncrypt: TButton
     Left = 3
-    Top = 184
+    Top = 208
     Width = 142
     Height = 25
     Caption = 'Encrypt'
@@ -42,11 +48,10 @@ object EncFrame: TEncFrame
     Lines.Strings = (
       'Hello, world!')
     TabOrder = 1
-    ExplicitWidth = 314
   end
   object btnDecrypt: TButton
     Left = 151
-    Top = 184
+    Top = 208
     Width = 142
     Height = 25
     Caption = 'Decrypt'
@@ -61,7 +66,6 @@ object EncFrame: TEncFrame
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 3
     Text = 'edtInputFileName'
-    ExplicitWidth = 253
   end
   object edtOutputFileName: TEdit
     Left = 64
@@ -71,11 +75,10 @@ object EncFrame: TEncFrame
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 4
     Text = 'edtInputFileName'
-    ExplicitWidth = 253
   end
   object chkBase64: TCheckBox
     Left = 8
-    Top = 222
+    Top = 246
     Width = 97
     Height = 17
     Caption = 'Use base64'
@@ -93,6 +96,12 @@ object EncFrame: TEncFrame
     Caption = 'Create test file from memo'
     TabOrder = 6
     OnClick = BtnGenrateFileClick
-    ExplicitWidth = 313
+  end
+  object cmbCipher: TComboBox
+    Left = 64
+    Top = 182
+    Width = 321
+    Height = 21
+    TabOrder = 7
   end
 end

@@ -17,6 +17,8 @@ type
     edtOutputFileName: TEdit;
     chkBase64: TCheckBox;
     BtnGenrateFile: TButton;
+    cmbCipher: TComboBox;
+    Label3: TLabel;
     procedure btnEncryptClick(Sender: TObject);
     procedure btnDecryptClick(Sender: TObject);
     procedure BtnGenrateFileClick(Sender: TObject);
@@ -41,6 +43,7 @@ begin
   try
     EncUtil.UseBase64 := chkBase64.Checked;
     EncUtil.Passphrase := InputBox(Name, 'password', '');
+    EncUtil.Cipher := cmbCipher.Text;
     EncUtil.Encrypt(edtInputFileName.Text, edtOutputFileName.Text);
   finally
     EncUtil.Free;
@@ -61,6 +64,7 @@ begin
 
   edtInputFileName.Text := TestFolder + 'AES_TEST_CLEAR.txt';
   edtOutputFileName.Text := TestFolder + 'AES_TEST_ENC.txt';
+  TEncUtil.SupportedCiphers(cmbCipher.Items);
 end;
 
 procedure TEncFrame.btnDecryptClick(Sender: TObject);
@@ -71,6 +75,7 @@ begin
   try
     EncUtil.UseBase64 := chkBase64.Checked;
     EncUtil.Passphrase := InputBox(Name, 'password', '');
+    EncUtil.Cipher := cmbCipher.Text;
     EncUtil.Decrypt(edtOutputFileName.Text, edtInputFileName.Text);
   finally
     EncUtil.Free;

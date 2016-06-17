@@ -28,20 +28,44 @@ unit OpenSSL.EncUtils;
 interface
 
 uses
-  System.Classes, System.SysUtils, System.AnsiStrings, OpenSSL.libeay32,
-  OpenSSL.Core, IdSSLOpenSSLHeaders;
+  System.Classes, System.SysUtils, System.AnsiStrings, Generics.Collections,
+  OpenSSL.libeay32, OpenSSL.Core, IdSSLOpenSSLHeaders;
 
 type
+  TCipherName = string;
+
+  TCipherProc = function : PEVP_CIPHER cdecl;
+
+  TCipherInfo = record
+    Name :TCipherName;
+    Proc :TCipherProc;
+  end;
+
   TEncUtil = class(TOpenSLLBase)
+  private
+    class var FCipherList :TList<TCipherInfo>;
+    class constructor Create;
+    class destructor Destroy;
   private
     FPassphrase: TBytes;
     FBase64: Boolean;
+    FCipherProc: TCipherProc;
+    FCipher: TCipherName;
     function GetPassphrase: string;
     procedure SetPassphrase(const Value: string);
+    procedure SetCipher(const Value: TCipherName);
   public
+    class procedure RegisterCipher(const Name :TCipherName; Proc :TCipherProc);
+    class procedure RegisterDefaultCiphers;
+    class procedure SupportedCiphers(Ciphers :TStrings);
+  public
+    constructor Create; override;
     // will be encoded in UTF8
     property Passphrase :string read GetPassphrase write SetPassphrase;
     property BinaryPassphrase :TBytes read FPassphrase write FPassphrase;
+
+    // Encryption algorithm
+    property Cipher :TCipherName read FCipher write SetCipher;
 
     // Apply a further base64 encoding to the encrypted buffer
     property UseBase64 :Boolean read FBase64 write FBase64;
@@ -72,7 +96,10 @@ var
   BuffStart :Integer;
   InputStart :Integer;
 begin
-  Cipher := EVP_aes_256_cbc();
+  if Assigned(FCipherProc) then
+    Cipher := FCipherProc()
+  else
+    Cipher := EVP_aes_256_cbc();
 
   if FBase64 then
   begin
@@ -147,7 +174,10 @@ begin
   WriteSalt := True;
   BuffStart := 0;
 
-  cipher := EVP_aes_256_cbc();
+  if Assigned(FCipherProc) then
+    cipher := FCipherProc()
+  else
+    cipher := EVP_aes_256_cbc();
   salt := EVP_GetSalt;
   EVP_GetKeyIV(FPassphrase, cipher, salt, key, InitVector);
 
@@ -221,9 +251,147 @@ begin
   Result := TEncoding.UTF8.GetString(FPassphrase);
 end;
 
+class procedure TEncUtil.RegisterCipher(const Name: TCipherName;
+  Proc: TCipherProc);
+var
+  Value :TCipherInfo;
+begin
+  Value.Name := Name;
+  Value.Proc := Proc;
+  FCipherList.Add(Value);
+end;
+
+class procedure TEncUtil.RegisterDefaultCiphers;
+begin
+  if FCipherList.Count > 0 then
+    Exit;
+
+  // AES
+  RegisterCipher('AES', EVP_aes_256_cbc);
+  RegisterCipher('AES-128', EVP_aes_128_cbc);
+  RegisterCipher('AES-192', EVP_aes_192_cbc);
+  RegisterCipher('AES-256', EVP_aes_256_cbc);
+
+  RegisterCipher('AES-CBC', EVP_aes_256_cbc);
+  RegisterCipher('AES-128-CBC', EVP_aes_128_cbc);
+  RegisterCipher('AES-192-CBC', EVP_aes_192_cbc);
+  RegisterCipher('AES-256-CBC', EVP_aes_256_cbc);
+
+  RegisterCipher('AES-CFB', EVP_aes_256_cfb128);
+  RegisterCipher('AES-128-CFB', EVP_aes_128_cfb128);
+  RegisterCipher('AES-192-CFB', EVP_aes_192_cfb128);
+  RegisterCipher('AES-256-CFB', EVP_aes_256_cfb128);
+
+  RegisterCipher('AES-CFB1', EVP_aes_256_cfb1);
+  RegisterCipher('AES-128-CFB1', EVP_aes_128_cfb1);
+  RegisterCipher('AES-192-CFB1', EVP_aes_192_cfb1);
+  RegisterCipher('AES-256-CFB1', EVP_aes_256_cfb1);
+
+  RegisterCipher('AES-CFB8', EVP_aes_256_cfb8);
+  RegisterCipher('AES-128-CFB8', EVP_aes_128_cfb8);
+  RegisterCipher('AES-192-CFB8', EVP_aes_192_cfb8);
+  RegisterCipher('AES-256-CFB8', EVP_aes_256_cfb8);
+
+  RegisterCipher('AES-ECB', EVP_aes_256_ecb);
+  RegisterCipher('AES-128-ECB', EVP_aes_128_ecb);
+  RegisterCipher('AES-192-ECB', EVP_aes_192_ecb);
+  RegisterCipher('AES-256-ECB', EVP_aes_256_ecb);
+
+  RegisterCipher('AES-OFB', EVP_aes_256_ofb);
+  RegisterCipher('AES-128-OFB', EVP_aes_128_ofb);
+  RegisterCipher('AES-192-OFB', EVP_aes_192_ofb);
+  RegisterCipher('AES-256-OFB', EVP_aes_256_ofb);
+
+  // Blowfish
+  RegisterCipher('BF', EVP_bf_cbc);
+  RegisterCipher('BF-CBC', EVP_bf_cbc);
+  RegisterCipher('BF-ECB', EVP_bf_ecb);
+  RegisterCipher('BF-CBF', EVP_bf_cfb64);
+  RegisterCipher('BF-OFB', EVP_bf_ofb);
+
+  // DES
+  RegisterCipher('DES-CBC', EVP_des_cbc);
+  RegisterCipher('DES', EVP_des_cbc);
+  RegisterCipher('DES-CFB', EVP_des_cfb64);
+  RegisterCipher('DES-OFB', EVP_des_ofb);
+  RegisterCipher('DES-ECB', EVP_des_ecb);
+
+  // Two key triple DES EDE
+  RegisterCipher('DES-EDE-CBC', EVP_des_ede_cbc);
+  RegisterCipher('DES-EDE', EVP_des_ede);
+  RegisterCipher('DES-EDE-CFB', EVP_des_ede_cfb64);
+  RegisterCipher('DES-EDE-OFB', EVP_des_ede_ofb);
+
+  // Two key triple DES EDE
+  RegisterCipher('DES-EDE3-CBC', EVP_des_ede3_cbc);
+  RegisterCipher('DES-EDE3', EVP_des_ede3);
+  RegisterCipher('DES3', EVP_des_ede3);
+  RegisterCipher('DES-EDE3-CFB', EVP_des_ede3_cfb64);
+  RegisterCipher('DES-EDE3-OFB', EVP_des_ede3_ofb);
+
+  // DESX algorithm
+  RegisterCipher('DESX', EVP_desx_cbc);
+
+  // IDEA algorithm
+  RegisterCipher('IDEA-CBC', EVP_idea_cbc);
+  RegisterCipher('IDEA', EVP_idea_cbc);
+  RegisterCipher('IDEA-CFB', EVP_idea_cfb64);
+  RegisterCipher('IDEA-ECB', EVP_idea_ecb);
+  RegisterCipher('IDEA-OFB', EVP_idea_ofb);
+
+  // RC2
+  RegisterCipher('RC2-CBC', EVP_rc2_cbc);
+  RegisterCipher('RC2', EVP_rc2_cbc);
+  RegisterCipher('RC2-CFB', EVP_rc2_cfb64);
+  RegisterCipher('RC2-ECB', EVP_rc2_ecb);
+  RegisterCipher('RC2-OFB', EVP_rc2_ofb);
+  RegisterCipher('RC2-64-CBC', nil);
+  RegisterCipher('RC2-40-CBC', nil);
+
+  // RC4
+  RegisterCipher('RC4', EVP_rc4);
+  RegisterCipher('RC4-40', EVP_rc4_40);
+
+end;
+
+procedure TEncUtil.SetCipher(const Value: TCipherName);
+var
+  CipherInfo :TCipherInfo;
+begin
+  FCipherProc := nil;
+  for CipherInfo in FCipherList do
+    if CipherInfo.Name = Value then
+      FCipherProc := CipherInfo.Proc;
+
+  if @FCipherProc = nil then
+    raise EOpenSSLError.CreateFmt('Cipher not found: "%s"', [Value]);
+  FCipher := Value;
+end;
+
 procedure TEncUtil.SetPassphrase(const Value: string);
 begin
   FPassphrase := TEncoding.UTF8.GetBytes(Value);
+end;
+
+class procedure TEncUtil.SupportedCiphers(Ciphers: TStrings);
+var
+  CipherInfo :TCipherInfo;
+begin
+  RegisterDefaultCiphers;
+  Ciphers.Clear;
+  for CipherInfo in FCipherList do
+    Ciphers.Add(CipherInfo.Name);
+end;
+
+class constructor TEncUtil.Create;
+begin
+  FCipherList := TList<TCipherInfo>.Create;
+end;
+
+constructor TEncUtil.Create;
+begin
+  inherited Create;
+  TEncUtil.RegisterDefaultCiphers;
 end;
 
 procedure TEncUtil.Decrypt(const InputFileName, OutputFileName: TFileName);
@@ -241,6 +409,11 @@ begin
   finally
     InputFile.Free;
   end;
+end;
+
+class destructor TEncUtil.Destroy;
+begin
+  FCipherList.Free;
 end;
 
 end.
