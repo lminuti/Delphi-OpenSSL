@@ -41,11 +41,16 @@ type
     Proc :TCipherProc;
   end;
 
+  TCipherList = class(TThreadList<TCipherInfo>)
+  public
+    function Count :Integer;
+    function GetProc(const Name :TCipherName) :TCipherProc;
+  end;
+
   TEncUtil = class(TOpenSLLBase)
   private
     class var
-    FCipherList :TList<TCipherInfo>;
-    FChipherLoaded :Integer;
+    FCipherList :TCipherList;
     class constructor Create;
     class destructor Destroy;
   private
@@ -266,7 +271,7 @@ end;
 class procedure TEncUtil.RegisterDefaultCiphers;
 begin
   CheckOpenSSLLibrary;
-  if AtomicCmpExchange(FChipherLoaded, 1, 0) = 0 then
+  if FCipherList.Count = 0 then
   begin
 
   // AES
@@ -359,14 +364,8 @@ begin
 end;
 
 procedure TEncUtil.SetCipher(const Value: TCipherName);
-var
-  CipherInfo :TCipherInfo;
 begin
-  FCipherProc := nil;
-  for CipherInfo in FCipherList do
-    if CipherInfo.Name = Value then
-      FCipherProc := CipherInfo.Proc;
-
+  FCipherProc := FCipherList.GetProc(Value);
   if @FCipherProc = nil then
     raise EOpenSSLError.CreateFmt('Cipher not found: "%s"', [Value]);
   FCipher := Value;
@@ -380,16 +379,22 @@ end;
 class procedure TEncUtil.SupportedCiphers(Ciphers: TStrings);
 var
   CipherInfo :TCipherInfo;
+  LocalCipherList :TList<TCipherInfo>;
 begin
   RegisterDefaultCiphers;
   Ciphers.Clear;
-  for CipherInfo in FCipherList do
-    Ciphers.Add(CipherInfo.Name);
+  LocalCipherList := FCipherList.LockList;
+  try
+    for CipherInfo in LocalCipherList do
+      Ciphers.Add(CipherInfo.Name);
+  finally
+    FCipherList.UnlockList;
+  end;
 end;
 
 class constructor TEncUtil.Create;
 begin
-  FCipherList := TList<TCipherInfo>.Create;
+  FCipherList := TCipherList.Create;
 end;
 
 constructor TEncUtil.Create;
@@ -418,6 +423,36 @@ end;
 class destructor TEncUtil.Destroy;
 begin
   FCipherList.Free;
+end;
+
+{ TCipherList }
+
+function TCipherList.Count: Integer;
+var
+  LocalCipherList :TList<TCipherInfo>;
+begin
+  LocalCipherList := LockList;
+  try
+    Result := LocalCipherList.Count;
+  finally
+    UnlockList;
+  end;
+end;
+
+function TCipherList.GetProc(const Name: TCipherName): TCipherProc;
+var
+  CipherInfo :TCipherInfo;
+  LocalCipherList :TList<TCipherInfo>;
+begin
+  Result := nil;
+  LocalCipherList := LockList;
+  try
+    for CipherInfo in LocalCipherList do
+      if CipherInfo.Name = Name then
+        Result := CipherInfo.Proc;
+  finally
+    UnlockList;
+  end;
 end;
 
 end.
