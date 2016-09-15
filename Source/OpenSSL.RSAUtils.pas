@@ -290,19 +290,13 @@ end;
 
 procedure TX509Cerificate.LoadFromFile(const FileName: string);
 var
-  KeyFile :pBIO;
+  Stream: TStream;
 begin
-  FreeRSA;
-  FreeX509;
-  KeyFile := BIO_new(BIO_s_file());
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
-    if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
-      RaiseOpenSSLError('X509 load file error');
-    FX509 := PEM_read_bio_X509(KeyFile, nil, nil, nil);
-    if not Assigned(FX509) then
-      RaiseOpenSSLError('X509 load certificate error');
+    LoadFromStream(Stream);
   finally
-    BIO_free(KeyFile);
+    Stream.Free;
   end;
 end;
 
@@ -362,23 +356,13 @@ end;
 
 procedure TRSAPrivateKey.LoadFromFile(const FileName: string);
 var
-  KeyFile :pBIO;
-  cb : ppem_password_cb;
+  Stream: TStream;
 begin
-  cb := nil;
-  KeyFile := BIO_new(BIO_s_file());
-
-  // TODO: On Windows BIO_new_files reserves for the filename argument to be UTF-8 encoded
-  if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
-    RaiseOpenSSLError('RSA load file error');
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
-    if Assigned(FOnNeedPassphrase) then
-      cb := @ReadKeyCallback;
-    FRSA := PEM_read_bio_RSAPrivateKey(KeyFile, nil, cb, Self);
-    if not Assigned(FRSA) then
-      RaiseOpenSSLError('RSA load private key error');
+    LoadFromStream(Stream);
   finally
-    BIO_free(KeyFile);
+    Stream.Free;
   end;
 end;
 
@@ -445,32 +429,13 @@ end;
 
 procedure TRSAPublicKey.LoadFromFile(const FileName: string);
 var
-  KeyFile :pBIO;
-  pKey :PEVP_PKEY;
+  Stream: TStream;
 begin
-  KeyFile := BIO_new(BIO_s_file());
-
-  if BIO_read_filename(KeyFile, OpenSSLEncodeFileName(FileName)) = 0 then
-    RaiseOpenSSLError('RSA load file error');
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
   try
-// Does'n work
-//    FRSA := PEM_read_bio_RSAPublicKey(KeyFile, nil, nil, nil);
-//    if not Assigned(FRSA) then
-//      RaiseOpenSSLError('RSA load public key error');
-    pKey := PEM_read_bio_PUBKEY(KeyFile, nil, nil, nil);
-    if not Assigned(pKey) then
-      RaiseOpenSSLError('PUBKEY load public key error');
-
-    try
-      FRSA := EVP_PKEY_get1_RSA(pKey);
-
-      if not Assigned(FRSA) then
-        RaiseOpenSSLError('RSA load public key error');
-    finally
-      EVP_PKEY_free(pKey);
-    end;
+    LoadFromStream(Stream);
   finally
-    BIO_free(KeyFile);
+    Stream.Free;
   end;
 end;
 

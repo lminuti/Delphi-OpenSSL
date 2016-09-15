@@ -57,8 +57,6 @@ const
 
 function GetOpenSSLErrorMessage: string;
 
-function OpenSSLEncodeFileName(const FileName :string) :PAnsiChar;
-
 procedure RaiseOpenSSLError(const AMessage :string = '');
 
 function EVP_GetSalt: TBytes;
@@ -134,14 +132,6 @@ end;
 procedure EVP_GetKeyIV(APassword: string; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes);
 begin
   EVP_GetKeyIV(TEncoding.UTF8.GetBytes(APassword), ACipher, ASalt, Key, IV);
-end;
-
-function OpenSSLEncodeFileName(const FileName :string) :PAnsiChar;
-var
-  Utf8FileName: RawByteString;
-begin
-  Utf8FileName := UTF8Encode(FileName);
-  Result := PAnsiChar(Utf8FileName);
 end;
 
 function GetOpenSSLErrorMessage: string;
