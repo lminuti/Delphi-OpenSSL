@@ -114,7 +114,6 @@ begin
   end;
 end;
 
-
 function EVP_GetSalt: TBytes;
 begin
   SetLength(result, PKCS5_SALT_LEN);

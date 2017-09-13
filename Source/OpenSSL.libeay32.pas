@@ -38,17 +38,19 @@ var
   BIO_push : function (b :pBIO; append :pBIO) :pBIO; cdecl;
   BIO_pop : function (b :pBIO) :pBIO; cdecl;
   BIO_set_next : function (b :pBIO; next :pBIO) :pBIO; cdecl;
+  RSA_print : function (bp :pBIO; x: pRSA; offset: Integer): Integer; cdecl;
 
 //  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 //
   PEM_read_bio_PUBKEY : function(bp : PBIO; x : PPEVP_PKEY; cb : ppem_password_cb; u: Pointer) : PEVP_PKEY cdecl;
 
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
+function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
+function BIO_to_string(b : PBIO): string; overload;
 
 function LoadOpenSSLLibraryEx :Boolean;
 
 procedure OPENSSL_free(address: pointer);
-function BIO_new_from_stream(AStream :TStream) :pBIO;
 
 implementation
 
@@ -71,18 +73,28 @@ begin
   Result := BIO_ctrl(b,BIO_CTRL_INFO,0,pp);
 end;
 
+function BIO_to_string(b : PBIO; Encoding: TEncoding): string;
+const
+  BuffSize = 1024;
+var
+  Buffer: TBytes;
+begin
+  Result := '';
+  SetLength(Buffer, BuffSize);
+  while BIO_read(b, buffer, BuffSize) > 0 do
+  begin
+    Result := Result + Encoding.GetString(Buffer);
+  end;
+end;
+
+function BIO_to_string(b : PBIO): string; overload;
+begin
+  Result := BIO_to_string(b, TEncoding.ANSI);
+end;
+
 procedure OPENSSL_free(address: pointer);
 begin
   CRYPTO_free(address);
-end;
-
-function BIO_new_from_stream(AStream :TStream) :pBIO;
-var
-  Buffer :TBytes;
-begin
-  SetLength(Buffer, AStream.Size);
-  AStream.ReadBuffer(Buffer[0], AStream.Size);
-  Result := BIO_new_mem_buf(Buffer, Length(Buffer));
 end;
 
 function LoadOpenSSLLibraryEx :Boolean;
@@ -106,6 +118,8 @@ begin
     BIO_push := GetProcAddress(hSSL, 'BIO_push');
     BIO_pop := GetProcAddress(hSSL, 'BIO_pop');
     BIO_set_next := GetProcAddress(hSSL, 'BIO_set_next');
+
+    RSA_print := GetProcAddress(hSSL, 'RSA_print');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;

@@ -1,20 +1,23 @@
 object RSABufferFrame: TRSABufferFrame
   Left = 0
   Top = 0
-  Width = 451
-  Height = 305
+  Width = 468
+  Height = 887
   Align = alClient
   AutoScroll = True
   TabOrder = 0
+  ExplicitWidth = 451
+  ExplicitHeight = 305
   object grpPublicKey: TGroupBox
     AlignWithMargins = True
     Left = 3
     Top = 3
-    Width = 428
+    Width = 462
     Height = 254
     Align = alTop
     Caption = 'Public key'
     TabOrder = 0
+    ExplicitWidth = 428
     object btnLoadPubKeyIntoMem: TButton
       Left = 16
       Top = 13
@@ -62,11 +65,12 @@ object RSABufferFrame: TRSABufferFrame
     AlignWithMargins = True
     Left = 3
     Top = 263
-    Width = 428
+    Width = 462
     Height = 254
     Align = alTop
     Caption = 'Private key'
     TabOrder = 1
+    ExplicitWidth = 428
     object btnLoadPrivKeyIntoMemo: TButton
       Left = 16
       Top = 13
@@ -83,7 +87,7 @@ object RSABufferFrame: TRSABufferFrame
       Height = 25
       Caption = 'Load memo into TRSAPrivateKey'
       TabOrder = 1
-      OnClick = btnLoadPublicKeyClick
+      OnClick = btnLoadPrivateKeyClick
     end
     object edtPriv: TEdit
       Left = 16
@@ -114,11 +118,12 @@ object RSABufferFrame: TRSABufferFrame
     AlignWithMargins = True
     Left = 3
     Top = 523
-    Width = 428
+    Width = 462
     Height = 254
     Align = alTop
     Caption = 'Certificate'
     TabOrder = 2
+    ExplicitWidth = 428
     object btnLoadCertIntoMemo: TButton
       Left = 16
       Top = 16

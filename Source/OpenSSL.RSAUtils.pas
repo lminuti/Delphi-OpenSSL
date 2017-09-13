@@ -42,6 +42,7 @@ type
   // RSA public key
   TRSAPublicKey = class(TRSAKey)
   private
+    FBuffer: TBytes;
     FRSA :PRSA;
     FCerificate :TX509Cerificate;
     procedure FreeRSA;
@@ -49,6 +50,7 @@ type
   public
     constructor Create; override;
     destructor Destroy; override;
+    function Print: string;
     function IsValid :Boolean; override;
     procedure LoadFromFile(const FileName :string); override;
     procedure LoadFromStream(AStream :TStream); override;
@@ -58,6 +60,7 @@ type
   // RSA private key
   TRSAPrivateKey = class(TRSAKey)
   private
+    FBuffer: TBytes;
     FRSA :PRSA;
     FOnNeedPassphrase: TPassphraseEvent;
     procedure FreeRSA;
@@ -66,6 +69,7 @@ type
     constructor Create; override;
     destructor Destroy; override;
     function IsValid :Boolean; override;
+    function Print: string;
     procedure LoadFromFile(const FileName :string); override;
     procedure LoadFromStream(AStream :TStream); override;
     property OnNeedPassphrase :TPassphraseEvent read FOnNeedPassphrase write FOnNeedPassphrase;
@@ -74,6 +78,7 @@ type
   // certificate containing an RSA public key
   TX509Cerificate = class(TOpenSLLBase)
   private
+    FBuffer: TBytes;
     FPublicRSA :PRSA;
     FX509 :pX509;
     procedure FreeRSA;
@@ -84,6 +89,7 @@ type
     destructor Destroy; override;
 
     function IsValid :Boolean;
+    function Print: string;
     procedure LoadFromFile(const FileName :string);
     procedure LoadFromStream(AStream :TStream);
   end;
@@ -288,6 +294,20 @@ begin
   Result := Assigned(FX509);
 end;
 
+function TX509Cerificate.Print: string;
+var
+  bp: PBIO;
+begin
+  bp := BIO_new(BIO_s_mem());
+  try
+    if RSA_print(bp, GetPublicRSA, 0) = 0 then
+      RaiseOpenSSLError('RSA_print');
+    Result := BIO_to_string(bp);
+  finally
+    BIO_free(bp);
+  end;
+end;
+
 procedure TX509Cerificate.LoadFromFile(const FileName: string);
 var
   Stream: TStream;
@@ -306,7 +326,10 @@ var
 begin
   FreeRSA;
   FreeX509;
-  KeyFile := BIO_new_from_stream(AStream);
+
+  SetLength(FBuffer, AStream.Size);
+  AStream.ReadBuffer(FBuffer[0], AStream.Size);
+  KeyFile := BIO_new_mem_buf(FBuffer, Length(FBuffer));
   if KeyFile = nil then
     RaiseOpenSSLError('X509 load stream error');
   try
@@ -354,6 +377,20 @@ begin
   Result := GetRSA <> nil;
 end;
 
+function TRSAPrivateKey.Print: string;
+var
+  bp: PBIO;
+begin
+  bp := BIO_new(BIO_s_mem());
+  try
+    if RSA_print(bp, FRSA, 0) = 0 then
+      RaiseOpenSSLError('RSA_print');
+    Result := BIO_to_string(bp);
+  finally
+    BIO_free(bp);
+  end;
+end;
+
 procedure TRSAPrivateKey.LoadFromFile(const FileName: string);
 var
   Stream: TStream;
@@ -372,7 +409,12 @@ var
   cb : ppem_password_cb;
 begin
   cb := nil;
-  KeyBuffer := BIO_new_from_stream(AStream);
+
+  SetLength(FBuffer, AStream.Size);
+  AStream.ReadBuffer(FBuffer[0], AStream.Size);
+  KeyBuffer := BIO_new_mem_buf(FBuffer, Length(FBuffer));
+
+
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try
@@ -444,7 +486,9 @@ var
   KeyBuffer :pBIO;
   pKey :PEVP_PKEY;
 begin
-  KeyBuffer := BIO_new_from_stream(AStream);
+  SetLength(FBuffer, AStream.Size);
+  AStream.ReadBuffer(FBuffer[0], AStream.Size);
+  KeyBuffer := BIO_new_mem_buf(FBuffer, Length(FBuffer));
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try
@@ -466,6 +510,20 @@ begin
     end;
   finally
     BIO_free(KeyBuffer);
+  end;
+end;
+
+function TRSAPublicKey.Print: string;
+var
+  bp: PBIO;
+begin
+  bp := BIO_new(BIO_s_mem());
+  try
+    if RSA_print(bp, FRSA, 0) = 0 then
+      RaiseOpenSSLError('RSA_print');
+    Result := BIO_to_string(bp);
+  finally
+    BIO_free(bp);
   end;
 end;
 

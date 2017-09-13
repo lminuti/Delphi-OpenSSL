@@ -45,10 +45,11 @@ type
     edtCert: TEdit;
     memCert: TMemo;
     procedure btnLoadPubKeyIntoMemClick(Sender: TObject);
-    procedure btnLoadPublicKeyClick(Sender: TObject);
+    procedure btnLoadPrivateKeyClick(Sender: TObject);
     procedure btnLoadPrivKeyIntoMemoClick(Sender: TObject);
     procedure btnLoadCertIntoMemoClick(Sender: TObject);
     procedure btnLoadCertClick(Sender: TObject);
+    procedure btnLoadPublicKeyClick(Sender: TObject);
   private
     procedure PassphraseReader(Sender: TObject; var Passphrase: string);
     { Private declarations }
@@ -75,6 +76,7 @@ begin
     Cerificate := TX509Cerificate.Create;
     try
       Cerificate.LoadFromStream(Buffer);
+      ShowMessage(Cerificate.Print);
     finally
       Cerificate.Free;
     end;
@@ -101,6 +103,25 @@ end;
 procedure TRSABufferFrame.btnLoadPublicKeyClick(Sender: TObject);
 var
   Buffer :TStream;
+  PublicKey :TRSAPublicKey;
+begin
+  Buffer := TStringStream.Create(memPub.Text);
+  try
+    PublicKey := TRSAPublicKey.Create;
+    try
+      PublicKey.LoadFromStream(Buffer);
+      ShowMessage(PublicKey.Print);
+    finally
+      PublicKey.Free;
+    end;
+  finally
+    Buffer.Free;
+  end;
+end;
+
+procedure TRSABufferFrame.btnLoadPrivateKeyClick(Sender: TObject);
+var
+  Buffer :TStream;
   PrivateKey :TRSAPrivateKey;
 begin
   Buffer := TStringStream.Create(memPriv.Text);
@@ -109,6 +130,7 @@ begin
     try
       PrivateKey.OnNeedPassphrase := PassphraseReader;
       PrivateKey.LoadFromStream(Buffer);
+      ShowMessage(PrivateKey.Print);
     finally
       PrivateKey.Free;
     end;
