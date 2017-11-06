@@ -13,3 +13,5 @@ TestData/.rnd
 *.certcry
 *.keycry
 .rnd
+TestData/*.cnf
+TestData/*.p7m
