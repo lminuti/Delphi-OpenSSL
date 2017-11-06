@@ -26,7 +26,13 @@ uses
   SSLDemo.MainForm in 'SSLDemo.MainForm.pas' {MainForm},
   SSLDemo.MainFrame in 'SSLDemo.MainFrame.pas' {MainFrame: TFrame},
   SSLDemo.RSABufferFrame in 'SSLDemo.RSABufferFrame.pas' {RSABufferFrame: TFrame},
-  SSLDemo.EncFrame in 'SSLDemo.EncFrame.pas' {EncFrame: TFrame};
+  SSLDemo.EncFrame in 'SSLDemo.EncFrame.pas' {EncFrame: TFrame},
+  SSLDemo.UnpackPKCS7Frame in 'SSLDemo.UnpackPKCS7Frame.pas' {UnpackPKCS7Frame: TFrame},
+  OpenSSL.Core in '..\..\Source\OpenSSL.Core.pas',
+  OpenSSL.EncUtils in '..\..\Source\OpenSSL.EncUtils.pas',
+  OpenSSL.libeay32 in '..\..\Source\OpenSSL.libeay32.pas',
+  OpenSSL.RSAUtils in '..\..\Source\OpenSSL.RSAUtils.pas',
+  OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas';
 
 {$R *.res}
 

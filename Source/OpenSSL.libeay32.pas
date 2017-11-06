@@ -26,6 +26,37 @@ interface
 uses
   System.Classes, System.SysUtils, IdSSLOpenSSLHeaders, IdSSLOpenSSL;
 
+const
+  { S/MIME related flags }
+  PKCS7_TEXT              = $1;
+  PKCS7_NOCERTS           = $2;
+  PKCS7_NOSIGS            = $4;
+  PKCS7_NOCHAIN           = $8;
+  PKCS7_NOINTERN          = $10;
+  PKCS7_NOVERIFY          = $20;
+  PKCS7_DETACHED          = $40;
+  PKCS7_BINARY            = $80;
+  PKCS7_NOATTR            = $100;
+  PKCS7_NOSMIMECAP        = $200;
+  PKCS7_NOOLDMIMETYPE     = $400;
+  PKCS7_CRLFEOL           = $800;
+  PKCS7_STREAM            = $1000;
+  PKCS7_NOCRL             = $2000;
+  PKCS7_PARTIAL           = $4000;
+  PKCS7_REUSE_DIGEST      = $8000;
+  PKCS7_NO_DUAL_CONTENT   = $10000;
+
+  { Flags: for compatibility with older code }
+  SMIME_TEXT      = PKCS7_TEXT;
+  SMIME_NOCERTS   = PKCS7_NOCERTS;
+  SMIME_NOSIGS    = PKCS7_NOSIGS;
+  SMIME_NOCHAIN   = PKCS7_NOCHAIN;
+  SMIME_NOINTERN  = PKCS7_NOINTERN;
+  SMIME_NOVERIFY  = PKCS7_NOVERIFY;
+  SMIME_DETACHED  = PKCS7_DETACHED;
+  SMIME_BINARY    = PKCS7_BINARY;
+  SMIME_NOATTR    = PKCS7_NOATTR;
+
 var
   X509_get_pubkey : function (a: pX509): pEVP_PKEY; cdecl;
 
@@ -43,6 +74,10 @@ var
 //  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 //
   PEM_read_bio_PUBKEY : function(bp : PBIO; x : PPEVP_PKEY; cb : ppem_password_cb; u: Pointer) : PEVP_PKEY cdecl;
+
+  d2i_PKCS7_bio: function(bp: PBIO; var pkcs7: PPKCS7): PPKCS7; cdecl;
+  PKCS7_verify: function(p7: PPKCS7; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
+  X509_STORE_new: function(): PX509_STORE; cdecl;
 
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
@@ -120,6 +155,10 @@ begin
     BIO_set_next := GetProcAddress(hSSL, 'BIO_set_next');
 
     RSA_print := GetProcAddress(hSSL, 'RSA_print');
+
+    d2i_PKCS7_bio := GetProcAddress(hSSL, 'd2i_PKCS7_bio');
+    PKCS7_verify := GetProcAddress(hSSL, 'PKCS7_verify');
+    X509_STORE_new := GetProcAddress(hSSL, 'X509_STORE_new');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;

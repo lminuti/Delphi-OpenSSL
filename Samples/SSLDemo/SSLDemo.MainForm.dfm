@@ -19,7 +19,7 @@ object MainForm: TMainForm
     Top = 0
     Width = 613
     Height = 544
-    ActivePage = tabEncryption
+    ActivePage = tabTutorial
     Align = alClient
     TabOrder = 0
     object tabTutorial: TTabSheet
@@ -28,12 +28,22 @@ object MainForm: TMainForm
     object tabRSABuffer: TTabSheet
       Caption = 'RSABuffer'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
     end
     object tabEncryption: TTabSheet
       Caption = 'Encryption'
       ImageIndex = 2
-      ExplicitLeft = 8
-      ExplicitTop = 28
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
+    end
+    object tabUnpackPKCS7: TTabSheet
+      Caption = 'Unpack PKCS7'
+      ImageIndex = 3
     end
   end
 end
