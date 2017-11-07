@@ -17,11 +17,10 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
   object lblOutputFile: TLabel
     Left = 3
     Top = 46
-    Width = 114
+    Width = 55
     Height = 13
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Output file:'
-    ExplicitWidth = 55
   end
   object edtInputFileName: TEdit
     Left = 60
@@ -31,7 +30,6 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
     Text = 'edtInputFileName'
-    ExplicitWidth = 321
   end
   object edtOutputFileName: TEdit
     Left = 60
@@ -41,7 +39,6 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
     Text = 'edtInputFileName'
-    ExplicitWidth = 321
   end
   object btnUnpack: TButton
     AlignWithMargins = True

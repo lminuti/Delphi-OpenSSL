@@ -15,3 +15,4 @@ TestData/.rnd
 .rnd
 TestData/*.cnf
 TestData/*.p7m
+TestData/TestPKCS7-out.pdf

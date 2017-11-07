@@ -48,6 +48,9 @@ type
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
+    Label9: TLabel;
+    Label10: TLabel;
+    edtP7MTestFile: TEdit;
     procedure btnCryptWithKeyClick(Sender: TObject);
     procedure btnDecryptWithKeyClick(Sender: TObject);
     procedure btnCryptWithCertClick(Sender: TObject);
@@ -138,6 +141,7 @@ begin
   edtPriv.Text := TestFolder + 'privatekey.pem';
   edtPub.Text := TestFolder + 'publickey.pem';
   edtTextToCrypt.Text := TestFolder + 'test.txt';
+  edtP7MTestFile.Text := TestFolder + 'TestPKCS7.pdf.p7m';
 end;
 
 procedure TMainFrame.PassphraseReader(Sender: TObject; var Passphrase: string);

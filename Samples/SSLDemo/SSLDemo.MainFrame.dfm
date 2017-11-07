@@ -2,7 +2,7 @@ object MainFrame: TMainFrame
   Left = 0
   Top = 0
   Width = 591
-  Height = 385
+  Height = 429
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -12,28 +12,28 @@ object MainFrame: TMainFrame
   TabOrder = 0
   object lblTextToCrypt: TLabel
     Left = 24
-    Top = 195
+    Top = 227
     Width = 38
     Height = 13
     Caption = 'Test file'
   end
   object lblCertPath: TLabel
     Left = 24
-    Top = 83
+    Top = 99
     Width = 50
     Height = 13
     Caption = 'Certificate'
   end
   object lblPriv: TLabel
     Left = 24
-    Top = 110
+    Top = 126
     Width = 54
     Height = 13
     Caption = 'Private key'
   end
   object Label1: TLabel
     Left = 24
-    Top = 137
+    Top = 153
     Width = 47
     Height = 13
     Caption = 'Public key'
@@ -66,10 +66,10 @@ object MainFrame: TMainFrame
   end
   object Label4: TLabel
     Left = 24
-    Top = 54
+    Top = 70
     Width = 217
     Height = 13
-    Caption = '3. Check the following files are created'
+    Caption = '4. Check the following files are created'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -79,10 +79,10 @@ object MainFrame: TMainFrame
   end
   object Label5: TLabel
     Left = 24
-    Top = 168
+    Top = 200
     Width = 122
     Height = 13
-    Caption = '4. Generate a test file'
+    Caption = '5. Generate a test file'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -92,10 +92,10 @@ object MainFrame: TMainFrame
   end
   object Label6: TLabel
     Left = 24
-    Top = 224
+    Top = 256
     Width = 199
     Height = 13
-    Caption = '5. Try to encrypt with the cerificate'
+    Caption = '6. Try to encrypt with the cerificate'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -105,10 +105,10 @@ object MainFrame: TMainFrame
   end
   object Label7: TLabel
     Left = 24
-    Top = 274
+    Top = 306
     Width = 211
     Height = 13
-    Caption = '6. Try to decrypt with the private key'
+    Caption = '7. Try to decrypt with the private key'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -118,10 +118,10 @@ object MainFrame: TMainFrame
   end
   object Label8: TLabel
     Left = 24
-    Top = 324
+    Top = 356
     Width = 203
     Height = 13
-    Caption = '5. Try to encrypt with the public key'
+    Caption = '8. Try to encrypt with the public key'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -129,55 +129,75 @@ object MainFrame: TMainFrame
     Font.Style = [fsBold]
     ParentFont = False
   end
+  object Label9: TLabel
+    Left = 24
+    Top = 51
+    Width = 129
+    Height = 13
+    Caption = '3. Run create_p7m.bat'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label10: TLabel
+    Left = 24
+    Top = 180
+    Width = 59
+    Height = 13
+    Caption = 'P7M test file'
+  end
   object edtTextToCrypt: TEdit
     Left = 136
-    Top = 192
+    Top = 224
     Width = 353
     Height = 21
-    TabOrder = 0
+    TabOrder = 4
   end
   object edtCertFile: TEdit
     Left = 136
-    Top = 80
+    Top = 96
     Width = 435
     Height = 21
-    TabOrder = 1
+    TabOrder = 0
   end
   object btnCryptWithKey: TButton
     Left = 24
-    Top = 344
+    Top = 376
     Width = 131
     Height = 25
     Caption = 'Public Crypt'
-    TabOrder = 2
+    TabOrder = 8
     OnClick = btnCryptWithKeyClick
   end
   object edtPriv: TEdit
     Left = 136
-    Top = 107
+    Top = 123
     Width = 435
     Height = 21
-    TabOrder = 3
+    TabOrder = 1
   end
   object btnDecryptWithKey: TButton
     Left = 24
-    Top = 293
+    Top = 325
     Width = 131
     Height = 25
     Caption = 'Private decrypt'
-    TabOrder = 4
+    TabOrder = 7
     OnClick = btnDecryptWithKeyClick
   end
   object edtPub: TEdit
     Left = 136
-    Top = 134
+    Top = 150
     Width = 435
     Height = 21
-    TabOrder = 5
+    TabOrder = 2
   end
   object btnCryptWithCert: TButton
     Left = 24
-    Top = 243
+    Top = 275
     Width = 131
     Height = 25
     Caption = 'Public Crypt with cert'
@@ -186,11 +206,18 @@ object MainFrame: TMainFrame
   end
   object btnGenerateSampleFile: TButton
     Left = 495
-    Top = 190
+    Top = 222
     Width = 75
     Height = 25
     Caption = 'Generate'
-    TabOrder = 7
+    TabOrder = 5
     OnClick = btnGenerateSampleFileClick
+  end
+  object edtP7MTestFile: TEdit
+    Left = 136
+    Top = 177
+    Width = 435
+    Height = 21
+    TabOrder = 3
   end
 end

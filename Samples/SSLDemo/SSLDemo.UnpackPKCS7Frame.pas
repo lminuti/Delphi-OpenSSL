@@ -25,6 +25,7 @@ type
 implementation
 
 uses
+  Winapi.ShellAPI,
   OpenSSL.SMIMEUtils;
 
 {$R *.dfm}
@@ -51,6 +52,7 @@ begin
     end;
 
     OutputStream.SaveToFile(edtOutputFileName.Text);
+    ShellExecute(Handle, 'open', PChar(edtOutputFileName.Text), '', '', SW_SHOWDEFAULT);
   finally
     InputStream.Free;
     OutputStream.Free;
@@ -64,8 +66,8 @@ var
 begin
   inherited;
   TestFolder := StringReplace(ExtractFilePath(ParamStr(0)), 'Samples\SSLDemo', 'TestData', [rfReplaceAll, rfIgnoreCase]);
-  edtInputFileName.Text := TestFolder + 'PCKS7_TEST.pdf.p7m';
-  edtOutputFileName.Text := TestFolder + 'PCKS7_TEST.pdf';
+  edtInputFileName.Text := TestFolder + 'TestPKCS7.pdf.p7m';
+  edtOutputFileName.Text := TestFolder + 'TestPKCS7-out.pdf';
 end;
 
 end.
