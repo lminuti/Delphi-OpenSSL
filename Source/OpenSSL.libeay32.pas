@@ -92,6 +92,7 @@ function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
 
 function LoadOpenSSLLibraryEx :Boolean;
+procedure UnLoadOpenSSLLibraryEx;
 
 procedure OPENSSL_free(address: pointer);
 
@@ -140,6 +141,34 @@ begin
   CRYPTO_free(address);
 end;
 
+procedure ResetFuncPointers;
+begin
+  hSSL := 0;
+  X509_get_pubkey := nil;
+  BIO_free_all := nil;
+  PEM_read_bio_PUBKEY := nil;
+  EVP_BytesToKey := nil;
+  EVP_DecryptUpdate := nil;
+  EVP_DecryptFinal := nil;
+  EVP_DecryptFinal_ex := nil;
+  BIO_push := nil;
+  BIO_pop := nil;
+  BIO_set_next := nil;
+
+  RSA_print := nil;
+
+  d2i_PKCS7_bio := nil;
+  PKCS7_verify := nil;
+  X509_STORE_new := nil;
+  RAND_bytes := nil;
+  RAND_pseudo_bytes := nil;
+  RAND_status := nil;
+  RAND_poll := nil;
+  RAND_file_name := nil;
+  RAND_load_file := nil;
+  RAND_write_file := nil;
+end;
+
 function LoadOpenSSLLibraryEx :Boolean;
 begin
   if hSSL <> 0 then
@@ -185,27 +214,14 @@ end;
 procedure UnLoadOpenSSLLibraryEx;
 begin
   if hSSL <> 0 then
+  begin
     FreeLibrary(hSSL);
-end;
-
-
-procedure InitializeFuncPointers;
-begin
-  hSSL := 0;
-  X509_get_pubkey := nil;
-  BIO_free_all := nil;
-  PEM_read_bio_PUBKEY := nil;
-  EVP_BytesToKey := nil;
-  EVP_DecryptUpdate := nil;
-  EVP_DecryptFinal := nil;
-  EVP_DecryptFinal_ex := nil;
-  BIO_push := nil;
-  BIO_pop := nil;
-  BIO_set_next := nil;
+    ResetFuncPointers;
+  end;
 end;
 
 initialization
-  InitializeFuncPointers;
+  ResetFuncPointers;
   //LoadOpenSSLLibrary;
 
 finalization
