@@ -34,6 +34,7 @@ type
     tabTutorial: TTabSheet;
     tabRSABuffer: TTabSheet;
     tabEncryption: TTabSheet;
+    TabRandom: TTabSheet;
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
@@ -49,7 +50,8 @@ implementation
 {$R *.dfm}
 
 uses
-  SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame;
+  SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame,
+  SSLDemo.RandFrame;
 
 { TMainForm }
 
@@ -58,6 +60,7 @@ var
   MainFrame: TMainFrame;
   RSABufferFrame :TRSABufferFrame;
   EncFrame :TEncFrame;
+  RandomFrame: TRandomFrame;
 begin
   pgcMain.ActivePageIndex := 0;
 
@@ -69,6 +72,9 @@ begin
 
   EncFrame := TEncFrame.Create(Application);
   EncFrame.Parent := tabEncryption;
+
+  RandomFrame := TRandomFrame.Create(Application);
+  RandomFrame.Parent := TabRandom;
 end;
 
 end.

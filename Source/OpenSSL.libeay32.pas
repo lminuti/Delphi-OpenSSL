@@ -44,6 +44,14 @@ var
 //
   PEM_read_bio_PUBKEY : function(bp : PBIO; x : PPEVP_PKEY; cb : ppem_password_cb; u: Pointer) : PEVP_PKEY cdecl;
 
+  RAND_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
+  RAND_pseudo_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
+  RAND_status: function: Integer cdecl;
+  RAND_poll: function: Integer cdecl;
+  RAND_file_name: function (buf: PAnsiChar; num: Integer): PAnsiChar cdecl;
+  RAND_load_file: function (filename: PAnsiChar; max_bytes: Integer): Integer cdecl;
+  RAND_write_file: function (filename: PAnsiChar): Integer;
+
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
@@ -120,6 +128,14 @@ begin
     BIO_set_next := GetProcAddress(hSSL, 'BIO_set_next');
 
     RSA_print := GetProcAddress(hSSL, 'RSA_print');
+
+    RAND_bytes := GetProcAddress(hSSL, 'RAND_bytes');
+    RAND_pseudo_bytes := GetProcAddress(hSSL, 'RAND_pseudo_bytes');
+    RAND_status := GetProcAddress(hSSL, 'RAND_status');
+    RAND_poll := GetProcAddress(hSSL, 'RAND_poll');
+    RAND_file_name := GetProcAddress(hSSL, 'RAND_file_name');
+    RAND_load_file := GetProcAddress(hSSL, 'RAND_load_file');
+    RAND_write_file := GetProcAddress(hSSL, 'RAND_write_file');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;

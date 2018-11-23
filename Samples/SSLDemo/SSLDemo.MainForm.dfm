@@ -19,7 +19,7 @@ object MainForm: TMainForm
     Top = 0
     Width = 613
     Height = 544
-    ActivePage = tabEncryption
+    ActivePage = TabRandom
     Align = alClient
     TabOrder = 0
     object tabTutorial: TTabSheet
@@ -32,8 +32,10 @@ object MainForm: TMainForm
     object tabEncryption: TTabSheet
       Caption = 'Encryption'
       ImageIndex = 2
-      ExplicitLeft = 8
-      ExplicitTop = 28
+    end
+    object TabRandom: TTabSheet
+      Caption = 'Random'
+      ImageIndex = 3
     end
   end
 end
