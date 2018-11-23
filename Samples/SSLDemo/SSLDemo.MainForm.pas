@@ -35,6 +35,7 @@ type
     tabRSABuffer: TTabSheet;
     tabEncryption: TTabSheet;
     tabUnpackPKCS7: TTabSheet;
+    TabRandom: TTabSheet;
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
@@ -50,7 +51,8 @@ implementation
 {$R *.dfm}
 
 uses
-  SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame, SSLDemo.UnpackPKCS7Frame;
+  SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame, SSLDemo.UnpackPKCS7Frame,
+  SSLDemo.RandFrame;
 
 { TMainForm }
 
@@ -60,6 +62,7 @@ var
   RSABufferFrame :TRSABufferFrame;
   EncFrame :TEncFrame;
   UnpackFrame: TUnpackPKCS7Frame;
+  RandomFrame: TRandomFrame;
 begin
   pgcMain.ActivePageIndex := 0;
 
@@ -74,6 +77,9 @@ begin
 
   UnpackFrame := TUnpackPKCS7Frame.Create(Application);
   UnpackFrame.Parent := tabUnpackPKCS7;
+  
+  RandomFrame := TRandomFrame.Create(Application);
+  RandomFrame.Parent := TabRandom;
 end;
 
 end.

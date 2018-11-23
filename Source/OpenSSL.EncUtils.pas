@@ -47,6 +47,21 @@ type
     function GetProc(const Name :TCipherName) :TCipherProc;
   end;
 
+  TPassphraseType = (ptNone, ptPassword, ptKeys);
+
+  TPassphrase = record
+  private
+    FType: TPassphraseType;
+    FValue: TBytes;
+    FKey: TBytes;
+    FInitVector: TBytes;
+  public
+    class operator Implicit(const Value: string): TPassphrase;
+    class operator Implicit(const Value: TBytes): TPassphrase;
+    constructor Create(const Key, InitVector: TBytes); overload;
+    constructor Create(const Password: string; Encoding: TEncoding); overload;
+  end;
+
   TEncUtil = class(TOpenSLLBase)
   private
     class var
@@ -54,12 +69,10 @@ type
     class constructor Create;
     class destructor Destroy;
   private
-    FPassphrase: TBytes;
+    FPassphrase: TPassphrase;
     FBase64: Boolean;
     FCipherProc: TCipherProc;
     FCipher: TCipherName;
-    function GetPassphrase: string;
-    procedure SetPassphrase(const Value: string);
     procedure SetCipher(const Value: TCipherName);
   public
     class procedure RegisterCipher(const Name :TCipherName; Proc :TCipherProc);
@@ -68,8 +81,7 @@ type
   public
     constructor Create; override;
     // will be encoded in UTF8
-    property Passphrase :string read GetPassphrase write SetPassphrase;
-    property BinaryPassphrase :TBytes read FPassphrase write FPassphrase;
+    property Passphrase :TPassphrase read FPassphrase write FPassphrase;
 
     // Encryption algorithm
     property Cipher :TCipherName read FCipher write SetCipher;
@@ -120,19 +132,32 @@ begin
     InputStream.ReadBuffer(InputBuffer[0], InputStream.Size);
   end;
 
-  SetLength(Salt, SALT_SIZE);
-  // First read the magic text and the Salt - if any
-  if (AnsiString(TEncoding.ASCII.GetString(InputBuffer, 0, SALT_MAGIC_LEN)) = SALT_MAGIC) then
+  if FPassphrase.FType = ptPassword then
   begin
-    Move(InputBuffer[SALT_MAGIC_LEN], Salt[0], SALT_SIZE);
-    EVP_GetKeyIV(FPassphrase, Cipher, Salt, Key, InitVector);
-    InputStart := SALT_MAGIC_LEN + SALT_SIZE;
+    SetLength(Salt, SALT_SIZE);
+    if (AnsiString(TEncoding.ASCII.GetString(InputBuffer, 0, SALT_MAGIC_LEN)) = SALT_MAGIC) then
+    begin
+      if Length(FPassphrase.FValue) = 0 then
+        raise EOpenSSLError.Create('Password needed');
+
+      Move(InputBuffer[SALT_MAGIC_LEN], Salt[0], SALT_SIZE);
+      EVP_GetKeyIV(FPassphrase.FValue, Cipher, Salt, Key, InitVector);
+      InputStart := SALT_MAGIC_LEN + SALT_SIZE;
+    end
+    else
+    begin
+      EVP_GetKeyIV(FPassphrase.FValue, Cipher, nil, Key, InitVector);
+      InputStart := 0;
+    end;
+  end
+  else if FPassphrase.FType = ptKeys then
+  begin
+    Key := FPassphrase.FKey;
+    InitVector := FPassphrase.FInitVector;
+    InputStart := 0;
   end
   else
-  begin
-    EVP_GetKeyIV(FPassphrase, Cipher, nil, Key, InitVector);
-    InputStart := 0;
-  end;
+    raise EOpenSSLError.Create('Password needed');
 
   Context := EVP_CIPHER_CTX_new();
   if Context = nil then
@@ -176,17 +201,27 @@ var
   cipher: PEVP_CIPHER;
   BlockSize :Integer;
   BuffStart :Integer;
-  WriteSalt :Boolean;
 begin
-  WriteSalt := True;
   BuffStart := 0;
+  SetLength(Salt, 0);
 
   if Assigned(FCipherProc) then
     cipher := FCipherProc()
   else
     cipher := EVP_aes_256_cbc();
-  salt := EVP_GetSalt;
-  EVP_GetKeyIV(FPassphrase, cipher, salt, key, InitVector);
+
+  if FPassphrase.FType = ptPassword then
+  begin
+    salt := EVP_GetSalt;
+    EVP_GetKeyIV(FPassphrase.FValue, cipher, salt, key, InitVector);
+  end
+  else if FPassphrase.FType = ptKeys then
+  begin
+    Key := FPassphrase.FKey;
+    InitVector := FPassphrase.FInitVector;
+  end
+  else
+    raise EOpenSSLError.Create('Password needed');
 
   SetLength(InputBuffer, InputStream.Size);
   InputStream.ReadBuffer(InputBuffer[0], InputStream.Size);
@@ -200,7 +235,7 @@ begin
       RaiseOpenSSLError('Cannot initialize encryption process');
 
     BlockSize := EVP_CIPHER_CTX_block_size(Context);
-    if WriteSalt then
+    if Length(salt) > 0 then
     begin
       SetLength(OutputBuffer, Length(InputBuffer) + BlockSize + SALT_MAGIC_LEN + PKCS5_SALT_LEN);
       Move(PAnsiChar(SALT_MAGIC)^, OutputBuffer[BuffStart], SALT_MAGIC_LEN);
@@ -251,11 +286,6 @@ begin
   finally
     InputFile.Free;
   end;
-end;
-
-function TEncUtil.GetPassphrase: string;
-begin
-  Result := TEncoding.UTF8.GetString(FPassphrase);
 end;
 
 class procedure TEncUtil.RegisterCipher(const Name: TCipherName;
@@ -371,11 +401,6 @@ begin
   FCipher := Value;
 end;
 
-procedure TEncUtil.SetPassphrase(const Value: string);
-begin
-  FPassphrase := TEncoding.UTF8.GetBytes(Value);
-end;
-
 class procedure TEncUtil.SupportedCiphers(Ciphers: TStrings);
 var
   CipherInfo :TCipherInfo;
@@ -453,6 +478,33 @@ begin
   finally
     UnlockList;
   end;
+end;
+
+{ TPassphrase }
+
+constructor TPassphrase.Create(const Key, InitVector: TBytes);
+begin
+  FType := ptKeys;
+  FKey := Key;
+  FInitVector := InitVector;
+end;
+
+constructor TPassphrase.Create(const Password: string; Encoding: TEncoding);
+begin
+  FType := ptPassword;
+  FValue := Encoding.GetBytes(Password);
+end;
+
+class operator TPassphrase.Implicit(const Value: string): TPassphrase;
+begin
+  Result.FType := ptPassword;
+  Result.FValue := TEncoding.UTF8.GetBytes(Value);
+end;
+
+class operator TPassphrase.Implicit(const Value: TBytes): TPassphrase;
+begin
+  Result.FType := ptPassword;
+  Result.FValue := Value;
 end;
 
 end.

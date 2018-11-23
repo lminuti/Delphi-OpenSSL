@@ -19,7 +19,7 @@ object MainForm: TMainForm
     Top = 0
     Width = 613
     Height = 544
-    ActivePage = tabTutorial
+    ActivePage = tabEncryption
     Align = alClient
     TabOrder = 0
     object tabTutorial: TTabSheet
@@ -40,6 +40,10 @@ object MainForm: TMainForm
       ExplicitTop = 0
       ExplicitWidth = 0
       ExplicitHeight = 0
+    end
+    object TabRandom: TTabSheet
+      Caption = 'Random'
+      ImageIndex = 3
     end
     object tabUnpackPKCS7: TTabSheet
       Caption = 'Unpack PKCS7'
