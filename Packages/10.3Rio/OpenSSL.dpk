@@ -1,0 +1,46 @@
+package OpenSSL;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$DESCRIPTION 'Delphi OpenSSL Wrapper'}
+{$LIBSUFFIX '260'}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  IndySystem,
+  IndyProtocols,
+  IndyCore;
+
+contains
+  OpenSSL.Core in '..\..\Source\OpenSSL.Core.pas',
+  OpenSSL.EncUtils in '..\..\Source\OpenSSL.EncUtils.pas',
+  OpenSSL.libeay32 in '..\..\Source\OpenSSL.libeay32.pas',
+  OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas',
+  OpenSSL.RSAUtils in '..\..\Source\OpenSSL.RSAUtils.pas',
+  OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas';
+
+end.
