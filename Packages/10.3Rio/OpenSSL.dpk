@@ -27,7 +27,7 @@ package OpenSSL;
 {$ENDIF IMPLICITBUILDING}
 {$DESCRIPTION 'Delphi OpenSSL Wrapper'}
 {$LIBSUFFIX '260'}
-{$IMPLICITBUILD ON}
+{$IMPLICITBUILD OFF}
 
 requires
   rtl,

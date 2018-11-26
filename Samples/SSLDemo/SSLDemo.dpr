@@ -33,7 +33,8 @@ uses
   OpenSSL.RSAUtils in '..\..\Source\OpenSSL.RSAUtils.pas',
   OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas',
   SSLDemo.RandFrame in 'SSLDemo.RandFrame.pas' {RandomFrame: TFrame},
-  SSLDemo.UnpackPKCS7Frame in 'SSLDemo.UnpackPKCS7Frame.pas' {UnpackPKCS7Frame: TFrame};
+  SSLDemo.UnpackPKCS7Frame in 'SSLDemo.UnpackPKCS7Frame.pas' {UnpackPKCS7Frame: TFrame},
+  OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas';
 
 {$R *.res}
 
