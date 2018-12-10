@@ -22,8 +22,7 @@
 
 *Source code:*
 
-```
-#!delphi
+```delphi
 var
   RSAUtil :TRSAUtil;
   Cerificate :TX509Cerificate;
@@ -52,8 +51,7 @@ end;
 
 *Source code:*
 
-```
-#!delphi
+```delphi
 var
   RSAUtil :TRSAUtil;
 begin
@@ -76,8 +74,7 @@ end;
 
 *Source code:*
 
-```
-#!delphi
+```delphi
 var
   RSAUtil :TRSAUtil;
 begin
@@ -101,8 +98,7 @@ end;
 
 *Source code:*
 
-```
-#!delphi
+```delphi
 var
   EncUtil :TEncUtil;
 begin
