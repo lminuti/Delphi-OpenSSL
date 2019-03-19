@@ -69,7 +69,7 @@ implementation
 {$R *.dfm}
 
 uses
-  OpenSSL.RSAUtils, System.IOUtils, IdSSLOpenSSLHeaders;
+  OpenSSL.RSAUtils, System.IOUtils;
 
 { TMainForm }
 
