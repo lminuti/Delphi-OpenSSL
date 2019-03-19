@@ -534,7 +534,7 @@ end;
 
 { Stand alone Utils }
 
-function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes; KeySize: Integer): Boolean;
+function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes): Boolean;
 begin
   Result := CreateRSAKeyPairs_PKCS(APublicKey, APrivateKey, 2048);
 end;
