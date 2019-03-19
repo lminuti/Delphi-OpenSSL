@@ -534,6 +534,8 @@ end;
 
 { Stand alone Utils }
 
+// Thanks for Allen Drennan 
+// https://stackoverflow.com/questions/55229772/using-openssl-to-generate-keypairs/55239810#55239810
 function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes): Boolean;
 begin
   Result := CreateRSAKeyPairs_PKCS(APublicKey, APrivateKey, 2048);
