@@ -10,6 +10,7 @@
 - Basic PAM support
 - Generation of pseudo-random bit strings
 - Basic SMIME support
+- Generate RSA KeyPairs in PKCS PEM format
 
 ## Usage
 
