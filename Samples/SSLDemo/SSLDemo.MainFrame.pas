@@ -51,10 +51,13 @@ type
     Label9: TLabel;
     Label10: TLabel;
     edtP7MTestFile: TEdit;
+    Label11: TLabel;
+    BtnGenerateKeyPairs: TButton;
     procedure btnCryptWithKeyClick(Sender: TObject);
     procedure btnDecryptWithKeyClick(Sender: TObject);
     procedure btnCryptWithCertClick(Sender: TObject);
     procedure btnGenerateSampleFileClick(Sender: TObject);
+    procedure BtnGenerateKeyPairsClick(Sender: TObject);
   private
     procedure PassphraseReader(Sender :TObject; var Passphrase :string);
   public
@@ -66,7 +69,7 @@ implementation
 {$R *.dfm}
 
 uses
-  OpenSSL.RSAUtils;
+  OpenSSL.RSAUtils, System.IOUtils;
 
 { TMainForm }
 
@@ -91,7 +94,7 @@ begin
   try
     RSAUtil.PrivateKey.OnNeedPassphrase := PassphraseReader;
     RSAUtil.PrivateKey.LoadFromFile(edtPriv.Text);
-    RSAUtil.PrivateDecrypt(edtTextToCrypt.Text + '.certcry', edtTextToCrypt.Text + '.certdecry.txt');
+    RSAUtil.PrivateDecrypt(edtTextToCrypt.Text + '.keycry', edtTextToCrypt.Text + '.certdecry.txt');
   finally
     RSAUtil.Free;
   end;
@@ -123,8 +126,8 @@ var
 begin
   SL := TStringList.Create;
   try
-    SL.Text := 'Hello, world!';
-    SL.SaveToFile(edtTextToCrypt.Text);
+    SL.Text := 'Hello, world!   السلام عليكم';
+    SL.SaveToFile(edtTextToCrypt.Text, TEncoding.Unicode);
   finally
     SL.Free;
   end;
@@ -148,5 +151,25 @@ procedure TMainFrame.PassphraseReader(Sender: TObject; var Passphrase: string);
 begin
   Passphrase := InputBox(Name, 'Passphrase', '');
 end;
+
+procedure TMainFrame.BtnGenerateKeyPairsClick(Sender: TObject);
+var
+  FPublicKey, FPrivateKey: TBytes;
+begin
+
+  if CreateRSAKeyPairs_PKCS(FPublicKey, FPrivateKey) then
+  begin
+    System.IOUtils.TFile.WriteAllBytes(edtPriv.Text, FPrivateKey);
+    System.IOUtils.TFile.WriteAllBytes(edtPub.Text, FPublicKey);
+  end
+  else
+  begin
+    ShowMessage('Unable to generate RSA keys');
+  end;
+
+end;
+
+
+
 
 end.

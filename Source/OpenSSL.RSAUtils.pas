@@ -110,6 +110,9 @@ type
     property PrivateKey :TRSAPrivateKey read FPrivateKey;
   end;
 
+  function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes): Boolean; overload;
+  function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes; KeySize: Integer): Boolean; overload;
+
 implementation
 
 { TRSA }
@@ -239,6 +242,8 @@ begin
     InputFile.Free;
   end;
 end;
+
+
 
 { TX509Cerificate }
 
@@ -492,11 +497,11 @@ begin
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try
-// Does'n work
-//    FRSA := PEM_read_bio_RSAPublicKey(KeyFile, nil, nil, nil);
-//    if not Assigned(FRSA) then
-//      RaiseOpenSSLError('RSA load public key error');
-    pKey := PEM_read_bio_PUBKEY(KeyBuffer, nil, nil, nil);
+    FRSA := PEM_read_bio_RSAPublicKey(KeyBuffer, nil, nil, nil);
+    if not Assigned(FRSA) then
+      RaiseOpenSSLError('RSA load public key error');
+  // Does'n work
+   {pKey := PEM_read_bio_PubKey(KeyBuffer, nil, nil, nil);
     if not Assigned(pKey) then
       RaiseOpenSSLError('PUBKEY load public key error');
 
@@ -507,7 +512,7 @@ begin
         RaiseOpenSSLError('RSA load public key error');
     finally
       EVP_PKEY_free(pKey);
-    end;
+    end;}
   finally
     BIO_free(KeyBuffer);
   end;
@@ -526,5 +531,64 @@ begin
     BIO_free(bp);
   end;
 end;
+
+{ Stand alone Utils }
+
+// Thanks for Allen Drennan 
+// https://stackoverflow.com/questions/55229772/using-openssl-to-generate-keypairs/55239810#55239810
+function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes): Boolean;
+begin
+  Result := CreateRSAKeyPairs_PKCS(APublicKey, APrivateKey, 2048);
+end;
+
+function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes; KeySize: Integer): Boolean;
+var
+  Bignum: PBIGNUM;
+  RSA: PRSA;
+  PrivateKey, PublicKey: PBIO;
+  KeyLength: Integer;
+begin
+  Result := False;
+  Bignum := BN_new();
+  try
+    if BN_set_word(Bignum, RSA_F4) = 1 then
+    begin
+      RSA := RSA_new;
+      try
+        if RSA_generate_key_ex(RSA, KeySize, Bignum, nil) = 1 then
+        begin
+          { Write the public key }
+          PublicKey := BIO_new(BIO_s_mem);
+          try
+            PEM_write_bio_RSAPublicKey(PublicKey, RSA);
+            KeyLength := BIO_pending(PublicKey);
+            SetLength(APublicKey, KeyLength);
+            BIO_read(PublicKey, @APublicKey[0], KeyLength);
+          finally
+            BIO_free(PublicKey);
+          end;
+
+          { Write the private key }
+          PrivateKey := BIO_new(BIO_s_mem);
+          try
+            PEM_write_bio_RSAPrivateKey(PrivateKey, RSA, nil, nil, 0, nil, nil);
+            KeyLength := BIO_pending(PrivateKey);
+            SetLength(APrivateKey, KeyLength);
+            BIO_read(PrivateKey, @APrivateKey[0], KeyLength);
+          finally
+            BIO_free(PrivateKey);
+          end;
+
+          Result := True;
+        end;
+      finally
+        RSA_free(RSA);
+      end;
+    end;
+  finally
+    BN_free(Bignum);
+  end;
+end;
+
 
 end.
