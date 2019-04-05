@@ -34,11 +34,13 @@ uses
   OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas',
   SSLDemo.RandFrame in 'SSLDemo.RandFrame.pas' {RandomFrame: TFrame},
   SSLDemo.UnpackPKCS7Frame in 'SSLDemo.UnpackPKCS7Frame.pas' {UnpackPKCS7Frame: TFrame},
-  OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas';
+  OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas',
+  SSLDemo.KeyPairFrame in 'SSLDemo.KeyPairFrame.pas' {KeyPairFrame: TFrame};
 
 {$R *.res}
 
 begin
+  ReportMemoryLeaksOnShutdown := True;
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TMainForm, MainForm);

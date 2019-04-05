@@ -74,6 +74,7 @@ var
 //  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
 //
   PEM_read_bio_PUBKEY : function(bp : PBIO; x : PPEVP_PKEY; cb : ppem_password_cb; u: Pointer) : PEVP_PKEY cdecl;
+  PEM_write_bio_PUBKEY : function(bp : PBIO; x : PEVP_PKEY) : PEVP_PKEY cdecl;
 
   d2i_PKCS7_bio: function(bp: PBIO; var pkcs7: PPKCS7): PPKCS7; cdecl;
   PKCS7_verify: function(p7: PPKCS7; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
@@ -147,6 +148,7 @@ begin
   X509_get_pubkey := nil;
   BIO_free_all := nil;
   PEM_read_bio_PUBKEY := nil;
+  PEM_write_bio_PUBKEY := nil;
   EVP_BytesToKey := nil;
   EVP_DecryptUpdate := nil;
   EVP_DecryptFinal := nil;
@@ -183,6 +185,7 @@ begin
     X509_get_pubkey := GetProcAddress(hSSL, 'X509_get_pubkey');
     BIO_free_all := GetProcAddress(hSSL, 'BIO_free_all');
     PEM_read_bio_PUBKEY := GetProcAddress(hSSL, 'PEM_read_bio_PUBKEY');
+    PEM_write_bio_PUBKEY := GetProcAddress(hSSL, 'PEM_write_bio_PUBKEY');
     EVP_BytesToKey := GetProcAddress(hSSL, 'EVP_BytesToKey');
     EVP_DecryptUpdate := GetProcAddress(hSSL, 'EVP_DecryptUpdate');
     EVP_DecryptFinal := GetProcAddress(hSSL, 'EVP_DecryptFinal');

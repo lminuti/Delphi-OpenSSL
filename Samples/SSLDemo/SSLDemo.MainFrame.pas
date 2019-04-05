@@ -1,4 +1,4 @@
-{******************************************************************************}
+﻿{******************************************************************************}
 {                                                                              }
 {  Delphi OPENSSL Library                                                      }
 {  Copyright (c) 2016 Luca Minuti                                              }
@@ -53,6 +53,8 @@ type
     edtP7MTestFile: TEdit;
     Label11: TLabel;
     BtnGenerateKeyPairs: TButton;
+    Label12: TLabel;
+    Label13: TLabel;
     procedure btnCryptWithKeyClick(Sender: TObject);
     procedure btnDecryptWithKeyClick(Sender: TObject);
     procedure btnCryptWithCertClick(Sender: TObject);
@@ -126,7 +128,7 @@ var
 begin
   SL := TStringList.Create;
   try
-    SL.Text := 'Hello, world!   السلام عليكم';
+    SL.Text := 'Hello, world!';
     SL.SaveToFile(edtTextToCrypt.Text, TEncoding.Unicode);
   finally
     SL.Free;
@@ -138,7 +140,7 @@ var
   TestFolder :string;
 begin
   inherited;
-  TestFolder := StringReplace(ExtractFilePath(ParamStr(0)), 'Samples\SSLDemo', 'TestData', [rfReplaceAll, rfIgnoreCase]);
+  TestFolder := StringReplace(ExtractFilePath(ParamStr(0)), 'Samples' + PathDelim + 'SSLDemo', 'TestData', [rfReplaceAll, rfIgnoreCase]);
 
   edtCertFile.Text := TestFolder + 'publiccert.pem';
   edtPriv.Text := TestFolder + 'privatekey.pem';
@@ -154,22 +156,16 @@ end;
 
 procedure TMainFrame.BtnGenerateKeyPairsClick(Sender: TObject);
 var
-  FPublicKey, FPrivateKey: TBytes;
+  KeyPair: TRSAKeyPair;
 begin
-
-  if CreateRSAKeyPairs_PKCS(FPublicKey, FPrivateKey) then
-  begin
-    System.IOUtils.TFile.WriteAllBytes(edtPriv.Text, FPrivateKey);
-    System.IOUtils.TFile.WriteAllBytes(edtPub.Text, FPublicKey);
-  end
-  else
-  begin
-    ShowMessage('Unable to generate RSA keys');
+  KeyPair := TRSAKeyPair.Create;
+  try
+    KeyPair.GenerateKey;
+    KeyPair.PrivateKey.SaveToFile(edtPriv.Text);
+    KeyPair.PublicKey.SaveToFile(edtPub.Text);
+  finally
+    KeyPair.Free;
   end;
-
 end;
-
-
-
 
 end.

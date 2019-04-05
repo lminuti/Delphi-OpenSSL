@@ -31,14 +31,9 @@ uses
 type
   TMainForm = class(TForm)
     pgcMain: TPageControl;
-    tabTutorial: TTabSheet;
-    tabRSABuffer: TTabSheet;
-    tabEncryption: TTabSheet;
-    tabUnpackPKCS7: TTabSheet;
-    TabRandom: TTabSheet;
     procedure FormCreate(Sender: TObject);
   private
-    { Private declarations }
+    procedure AddFrame(const Caption: string; FrameClass: TControlClass);
   public
     { Public declarations }
   end;
@@ -52,34 +47,32 @@ implementation
 
 uses
   SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame, SSLDemo.UnpackPKCS7Frame,
-  SSLDemo.RandFrame;
+  SSLDemo.RandFrame, SSLDemo.KeyPairFrame;
 
 { TMainForm }
 
-procedure TMainForm.FormCreate(Sender: TObject);
+procedure TMainForm.AddFrame(const Caption: string;
+  FrameClass: TControlClass);
 var
-  MainFrame: TMainFrame;
-  RSABufferFrame :TRSABufferFrame;
-  EncFrame :TEncFrame;
-  UnpackFrame: TUnpackPKCS7Frame;
-  RandomFrame: TRandomFrame;
+  TabSheet: TTabSheet;
+  AFrame: TControl;
 begin
-  pgcMain.ActivePageIndex := 0;
+  TabSheet := TTabSheet.Create(pgcMain);
+  TabSheet.Caption := Caption;
+  TabSheet.PageControl := pgcMain;
 
-  MainFrame := TMainFrame.Create(Application);
-  MainFrame.Parent := tabTutorial;
+  AFrame := FrameClass.Create(Application);
+  AFrame.Parent := TabSheet;
+end;
 
-  RSABufferFrame := TRSABufferFrame.Create(Application);
-  RSABufferFrame.Parent := tabRSABuffer;
-
-  EncFrame := TEncFrame.Create(Application);
-  EncFrame.Parent := tabEncryption;
-
-  UnpackFrame := TUnpackPKCS7Frame.Create(Application);
-  UnpackFrame.Parent := tabUnpackPKCS7;
-  
-  RandomFrame := TRandomFrame.Create(Application);
-  RandomFrame.Parent := TabRandom;
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  AddFrame('Tutorial', TMainFrame);
+  AddFrame('RSABuffer', TRSABufferFrame);
+  AddFrame('Encryption', TEncFrame);
+  AddFrame('Random', TRandomFrame);
+  AddFrame('Unpack PKCS7', TUnpackPKCS7Frame);
+  AddFrame('KeyPair', TKeyPairFrame);
 end;
 
 end.

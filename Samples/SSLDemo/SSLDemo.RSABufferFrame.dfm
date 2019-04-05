@@ -1,23 +1,21 @@
 object RSABufferFrame: TRSABufferFrame
   Left = 0
   Top = 0
-  Width = 468
-  Height = 887
+  Width = 451
+  Height = 621
   Align = alClient
   AutoScroll = True
   TabOrder = 0
-  ExplicitWidth = 451
   ExplicitHeight = 305
   object grpPublicKey: TGroupBox
     AlignWithMargins = True
     Left = 3
     Top = 3
-    Width = 462
+    Width = 428
     Height = 254
     Align = alTop
     Caption = 'Public key'
     TabOrder = 0
-    ExplicitWidth = 428
     object btnLoadPubKeyIntoMem: TButton
       Left = 16
       Top = 13
@@ -30,7 +28,7 @@ object RSABufferFrame: TRSABufferFrame
     object btnLoadPublicKey: TButton
       Left = 16
       Top = 215
-      Width = 385
+      Width = 257
       Height = 25
       Caption = 'Load memo into TRSAPublicKey'
       TabOrder = 1
@@ -60,17 +58,29 @@ object RSABufferFrame: TRSABufferFrame
       TabOrder = 3
       WordWrap = False
     end
+    object cmbPublicKeyFormat: TComboBox
+      Left = 279
+      Top = 217
+      Width = 122
+      Height = 21
+      Style = csDropDownList
+      ItemIndex = 0
+      TabOrder = 4
+      Text = 'Default'
+      Items.Strings = (
+        'Default'
+        'RSAPublicKey')
+    end
   end
   object grpPrivateKey: TGroupBox
     AlignWithMargins = True
     Left = 3
     Top = 263
-    Width = 462
+    Width = 428
     Height = 254
     Align = alTop
     Caption = 'Private key'
     TabOrder = 1
-    ExplicitWidth = 428
     object btnLoadPrivKeyIntoMemo: TButton
       Left = 16
       Top = 13
@@ -83,7 +93,7 @@ object RSABufferFrame: TRSABufferFrame
     object btnLoadPrivateKey: TButton
       Left = 16
       Top = 215
-      Width = 385
+      Width = 257
       Height = 25
       Caption = 'Load memo into TRSAPrivateKey'
       TabOrder = 1
@@ -113,17 +123,29 @@ object RSABufferFrame: TRSABufferFrame
       TabOrder = 3
       WordWrap = False
     end
+    object cmbPrivateKeyFormat: TComboBox
+      Left = 279
+      Top = 217
+      Width = 122
+      Height = 21
+      Style = csDropDownList
+      ItemIndex = 0
+      TabOrder = 4
+      Text = 'Default'
+      Items.Strings = (
+        'Default'
+        'RSAPrivateKey')
+    end
   end
   object grpCertificate: TGroupBox
     AlignWithMargins = True
     Left = 3
     Top = 523
-    Width = 462
+    Width = 428
     Height = 254
     Align = alTop
     Caption = 'Certificate'
     TabOrder = 2
-    ExplicitWidth = 428
     object btnLoadCertIntoMemo: TButton
       Left = 16
       Top = 16

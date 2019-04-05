@@ -44,6 +44,8 @@ type
     btnLoadCert: TButton;
     edtCert: TEdit;
     memCert: TMemo;
+    cmbPrivateKeyFormat: TComboBox;
+    cmbPublicKeyFormat: TComboBox;
     procedure btnLoadPubKeyIntoMemClick(Sender: TObject);
     procedure btnLoadPrivateKeyClick(Sender: TObject);
     procedure btnLoadPrivKeyIntoMemoClick(Sender: TObject);
@@ -109,7 +111,7 @@ begin
   try
     PublicKey := TRSAPublicKey.Create;
     try
-      PublicKey.LoadFromStream(Buffer);
+      PublicKey.LoadFromStream(Buffer, TPublicKeyFormat(cmbPublicKeyFormat.ItemIndex));
       ShowMessage(PublicKey.Print);
     finally
       PublicKey.Free;
@@ -129,7 +131,7 @@ begin
     PrivateKey := TRSAPrivateKey.Create;
     try
       PrivateKey.OnNeedPassphrase := PassphraseReader;
-      PrivateKey.LoadFromStream(Buffer);
+      PrivateKey.LoadFromStream(Buffer, TPrivateKeyFormat(cmbPrivateKeyFormat.ItemIndex));
       ShowMessage(PrivateKey.Print);
     finally
       PrivateKey.Free;

@@ -32,47 +32,69 @@ type
 
   TPassphraseEvent = procedure (Sender :TObject; var Passphrase :string) of object;
 
-  TRSAKey = class(TOpenSLLBase)
-  public
-    function IsValid :Boolean; virtual; abstract;
-    procedure LoadFromFile(const FileName :string); virtual; abstract;
-    procedure LoadFromStream(AStream :TStream); virtual; abstract;
-  end;
+  TPublicKeyFormat = (kfDefault, kfRSAPublicKey);
+  TPrivateKeyFormat = (kpDefault, kpRSAPrivateKey);
 
   // RSA public key
-  TRSAPublicKey = class(TRSAKey)
+  TCustomRSAPublicKey = class(TOpenSLLBase)
   private
     FBuffer: TBytes;
-    FRSA :PRSA;
     FCerificate :TX509Cerificate;
-    procedure FreeRSA;
-    function GetRSA :PRSA;
+  protected
+    function GetRSA :PRSA; virtual; abstract;
+    procedure FreeRSA; virtual; abstract;
   public
     constructor Create; override;
     destructor Destroy; override;
     function Print: string;
-    function IsValid :Boolean; override;
-    procedure LoadFromFile(const FileName :string); override;
-    procedure LoadFromStream(AStream :TStream); override;
+    function IsValid :Boolean;
+    procedure LoadFromFile(const FileName :string; AFormat: TPublicKeyFormat = kfDefault); virtual;
+    procedure LoadFromStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); virtual;
     procedure LoadFromCertificate(Cerificate :TX509Cerificate);
+    procedure SaveToFile(const FileName :string; AFormat: TPublicKeyFormat = kfDefault); virtual;
+    procedure SaveToStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); virtual;
+  end;
+
+  TRSAPublicKey = class(TCustomRSAPublicKey)
+  private
+    FRSA :PRSA;
+  protected
+    procedure FreeRSA; override;
+    function GetRSA :PRSA; override;
+  public
+    constructor Create; override;
+    procedure LoadFromStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); override;
   end;
 
   // RSA private key
-  TRSAPrivateKey = class(TRSAKey)
+  TCustomRSAPrivateKey = class(TOpenSLLBase)
   private
     FBuffer: TBytes;
-    FRSA :PRSA;
     FOnNeedPassphrase: TPassphraseEvent;
-    procedure FreeRSA;
-    function GetRSA :PRSA;
+  protected
+    function GetRSA :PRSA; virtual; abstract;
+    procedure FreeRSA; virtual; abstract;
   public
     constructor Create; override;
     destructor Destroy; override;
-    function IsValid :Boolean; override;
+    function IsValid :Boolean;
     function Print: string;
-    procedure LoadFromFile(const FileName :string); override;
-    procedure LoadFromStream(AStream :TStream); override;
+    procedure LoadFromFile(const FileName :string; AFormat: TPrivateKeyFormat = kpDefault); virtual;
+    procedure LoadFromStream(AStream :TStream; AFormat: TPrivateKeyFormat = kpDefault); virtual;
+    procedure SaveToFile(const FileName :string; AFormat: TPrivateKeyFormat = kpDefault); virtual;
+    procedure SaveToStream(AStream :TStream; AFormat: TPrivateKeyFormat = kpDefault); virtual;
     property OnNeedPassphrase :TPassphraseEvent read FOnNeedPassphrase write FOnNeedPassphrase;
+  end;
+
+  TRSAPrivateKey = class(TCustomRSAPrivateKey)
+  private
+    FRSA :PRSA;
+  protected
+    procedure FreeRSA; override;
+    function GetRSA :PRSA; override;
+  public
+    constructor Create; override;
+    procedure LoadFromStream(AStream :TStream; AFormat: TPrivateKeyFormat = kpDefault); override;
   end;
 
   // certificate containing an RSA public key
@@ -94,10 +116,30 @@ type
     procedure LoadFromStream(AStream :TStream);
   end;
 
+  TRSAKeyPair = class(TOpenSLLBase)
+  private
+    FRSA: PRSA;
+    FPrivateKey: TCustomRSAPrivateKey;
+    FPublicKey: TCustomRSAPublicKey;
+    procedure FreeRSA;
+  public
+    property PrivateKey: TCustomRSAPrivateKey read FPrivateKey;
+    property PublicKey: TCustomRSAPublicKey read FPublicKey;
+
+    procedure GenerateKey; overload;
+    procedure GenerateKey(KeySize: Integer); overload;
+    constructor Create; override;
+    destructor Destroy; override;
+  end;
+
   TRSAUtil = class(TOpenSLLBase)
   private
-    FPublicKey :TRSAPublicKey;
-    FPrivateKey: TRSAPrivateKey;
+    FPublicKey :TCustomRSAPublicKey;
+    FPrivateKey: TCustomRSAPrivateKey;
+    FOwnedPrivateKey: TCustomRSAPrivateKey;
+    FOwnedPublicKey: TCustomRSAPublicKey;
+    procedure SetPrivateKey(const Value: TCustomRSAPrivateKey);
+    procedure SetPublicKey(const Value: TCustomRSAPublicKey);
   public
     constructor Create; override;
     destructor Destroy; override;
@@ -106,16 +148,32 @@ type
     procedure PrivateDecrypt(InputStream :TStream; OutputStream :TStream; Padding :TRASPadding = rpPKCS); overload;
     procedure PrivateDecrypt(const InputFileName, OutputFileName :TFileName; Padding :TRASPadding = rpPKCS); overload;
 
-    property PublicKey :TRSAPublicKey read FPublicKey;
-    property PrivateKey :TRSAPrivateKey read FPrivateKey;
+    property PublicKey :TCustomRSAPublicKey read FPublicKey write SetPublicKey;
+    property PrivateKey :TCustomRSAPrivateKey read FPrivateKey write SetPrivateKey;
   end;
-
-  function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes): Boolean; overload;
-  function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes; KeySize: Integer): Boolean; overload;
 
 implementation
 
-{ TRSA }
+type
+  TRSAKeyPairPrivateKey = class(TCustomRSAPrivateKey)
+  private
+    FKeyPair: TRSAKeyPair;
+  protected
+    procedure FreeRSA; override;
+    function GetRSA :PRSA; override;
+  public
+    constructor Create(KeyPair: TRSAKeyPair); reintroduce;
+  end;
+
+  TRSAKeyPairPublicKey = class(TCustomRSAPublicKey)
+  private
+    FKeyPair: TRSAKeyPair;
+  protected
+    procedure FreeRSA; override;
+    function GetRSA :PRSA; override;
+  public
+    constructor Create(KeyPair: TRSAKeyPair); reintroduce;
+  end;
 
 const
   PaddingMap : array [TRASPadding] of Integer = (RSA_PKCS1_PADDING, RSA_PKCS1_OAEP_PADDING, RSA_SSLV23_PADDING, RSA_NO_PADDING);
@@ -126,12 +184,12 @@ function ReadKeyCallback(buf: PAnsiChar; buffsize: integer; rwflag: integer; u: 
 var
   Len :Integer;
   Password :string;
-  PrivateKey :TRSAPrivateKey;
+  PrivateKey :TCustomRSAPrivateKey;
 begin
   Result := 0;
   if Assigned(u) then
   begin
-    PrivateKey := TRSAPrivateKey(u);
+    PrivateKey := TCustomRSAPrivateKey(u);
     if Assigned(PrivateKey.FOnNeedPassphrase) then
     begin
       PrivateKey.FOnNeedPassphrase(PrivateKey, Password);
@@ -172,14 +230,17 @@ end;
 constructor TRSAUtil.Create;
 begin
   inherited;
-  FPublicKey := TRSAPublicKey.Create;
-  FPrivateKey := TRSAPrivateKey.Create;
+  FOwnedPublicKey := TRSAPublicKey.Create;
+  FOwnedPrivateKey := TRSAPrivateKey.Create;
+
+  FPrivateKey := FOwnedPrivateKey;
+  FPublicKey := FOwnedPublicKey;
 end;
 
 destructor TRSAUtil.Destroy;
 begin
-  FPublicKey.Free;
-  FPrivateKey.Free;
+  FOwnedPublicKey.Free;
+  FOwnedPrivateKey.Free;
   inherited;
 end;
 
@@ -243,7 +304,15 @@ begin
   end;
 end;
 
+procedure TRSAUtil.SetPrivateKey(const Value: TCustomRSAPrivateKey);
+begin
+  FPrivateKey := Value;
+end;
 
+procedure TRSAUtil.SetPublicKey(const Value: TCustomRSAPublicKey);
+begin
+  FPublicKey := Value;
+end;
 
 { TX509Cerificate }
 
@@ -346,18 +415,278 @@ begin
   end;
 end;
 
+{ TCustomRSAPrivateKey }
+
+constructor TCustomRSAPrivateKey.Create;
+begin
+  inherited;
+end;
+
+destructor TCustomRSAPrivateKey.Destroy;
+begin
+  FreeRSA;
+  inherited;
+end;
+
+function TCustomRSAPrivateKey.IsValid: Boolean;
+begin
+  Result := GetRSA <> nil;
+end;
+
+procedure TCustomRSAPrivateKey.LoadFromFile(const FileName: string; AFormat: TPrivateKeyFormat = kpDefault);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    LoadFromStream(Stream, AFormat);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TCustomRSAPrivateKey.LoadFromStream(AStream: TStream; AFormat: TPrivateKeyFormat = kpDefault);
+begin
+  raise EOpenSSLError.Create('Cannot load private key');
+end;
+
+function TCustomRSAPrivateKey.Print: string;
+var
+  bp: PBIO;
+begin
+  bp := BIO_new(BIO_s_mem());
+  try
+    if RSA_print(bp, GetRSA, 0) = 0 then
+      RaiseOpenSSLError('RSA_print');
+    Result := BIO_to_string(bp);
+  finally
+    BIO_free(bp);
+  end;
+end;
+
+procedure TCustomRSAPrivateKey.SaveToFile(const FileName: string;
+  AFormat: TPrivateKeyFormat);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(FileName, fmCreate or fmShareDenyWrite);
+  try
+    SaveToStream(Stream, AFormat);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TCustomRSAPrivateKey.SaveToStream(AStream: TStream;
+  AFormat: TPrivateKeyFormat);
+var
+  PrivateKey: PBIO;
+  KeyLength: Integer;
+  Buffer: TBytes;
+  pKey: pEVP_PKEY;
+begin
+  PrivateKey := BIO_new(BIO_s_mem);
+  try
+    case AFormat of
+      kpDefault: begin
+        pKey := EVP_PKEY_new(); // TODO: check value
+        try
+          EVP_PKEY_set1_RSA(pKey, GetRSA); // TODO: check value
+          PEM_write_bio_PrivateKey(PrivateKey, pKey, nil, nil, 0, nil, nil);
+          KeyLength := BIO_pending(PrivateKey);
+        finally
+          EVP_PKEY_free(pKey);
+        end;
+      end;
+      kpRSAPrivateKey: begin
+        PEM_write_bio_RSAPrivateKey(PrivateKey, GetRSA, nil, nil, 0, nil, nil);
+        KeyLength := BIO_pending(PrivateKey);
+      end;
+      else
+        raise EOpenSSLError.Create('Invalid format');
+    end;
+
+    SetLength(Buffer, KeyLength);
+    BIO_read(PrivateKey, @Buffer[0], KeyLength);
+  finally
+    BIO_free(PrivateKey);
+  end;
+  AStream.Write(Buffer[0], Length(Buffer));
+end;
+
+{ TCustomRSAPublicKey }
+
+constructor TCustomRSAPublicKey.Create;
+begin
+  inherited;
+end;
+
+destructor TCustomRSAPublicKey.Destroy;
+begin
+  FreeRSA;
+  inherited;
+end;
+
+function TCustomRSAPublicKey.IsValid: Boolean;
+begin
+  Result := GetRSA <> nil;
+end;
+
+procedure TCustomRSAPublicKey.LoadFromCertificate(Cerificate: TX509Cerificate);
+begin
+  FCerificate := Cerificate;
+end;
+
+procedure TCustomRSAPublicKey.LoadFromFile(const FileName: string; AFormat: TPublicKeyFormat = kfDefault);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
+  try
+    LoadFromStream(Stream, AFormat);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TCustomRSAPublicKey.LoadFromStream(AStream: TStream; AFormat: TPublicKeyFormat);
+begin
+  raise EOpenSSLError.Create('Cannot load private key');
+end;
+
+function TCustomRSAPublicKey.Print: string;
+var
+  bp: PBIO;
+begin
+  bp := BIO_new(BIO_s_mem());
+  try
+    if RSA_print(bp, GetRSA, 0) = 0 then
+      RaiseOpenSSLError('RSA_print');
+    Result := BIO_to_string(bp);
+  finally
+    BIO_free(bp);
+  end;
+end;
+
+procedure TCustomRSAPublicKey.SaveToFile(const FileName: string;
+  AFormat: TPublicKeyFormat);
+var
+  Stream: TStream;
+begin
+  Stream := TFileStream.Create(FileName, fmCreate or fmShareDenyWrite);
+  try
+    SaveToStream(Stream, AFormat);
+  finally
+    Stream.Free;
+  end;
+end;
+
+procedure TCustomRSAPublicKey.SaveToStream(AStream: TStream;
+  AFormat: TPublicKeyFormat);
+var
+  PublicKey: PBIO;
+  KeyLength: Integer;
+  Buffer: TBytes;
+  pKey: pEVP_PKEY;
+begin
+  PublicKey := BIO_new(BIO_s_mem);
+  try
+
+    case AFormat of
+      kfDefault: begin
+        pKey := EVP_PKEY_new(); // TODO: check value
+        try
+          EVP_PKEY_set1_RSA(pKey, GetRSA); // TODO: check value
+          PEM_write_bio_PUBKEY(PublicKey, pKey);
+          KeyLength := BIO_pending(PublicKey);
+        finally
+          EVP_PKEY_free(pKey);
+        end;
+      end;
+      kfRSAPublicKey: begin
+        PEM_write_bio_RSAPublicKey(PublicKey, GetRSA);
+        KeyLength := BIO_pending(PublicKey);
+      end;
+      else
+        raise EOpenSSLError.Create('Invalid format');
+    end;
+
+    SetLength(Buffer, KeyLength);
+    BIO_read(PublicKey, @Buffer[0], KeyLength);
+  finally
+    BIO_free(PublicKey);
+  end;
+  AStream.WriteBuffer(Buffer[0], Length(Buffer));
+end;
+
+{ TRSAKeyPair }
+
+constructor TRSAKeyPair.Create;
+begin
+  inherited;
+  FPrivateKey := TRSAKeyPairPrivateKey.Create(Self);
+  FPublicKey := TRSAKeyPairPublicKey.Create(Self);
+end;
+
+destructor TRSAKeyPair.Destroy;
+begin
+  FreeRSA;
+  FPrivateKey.Free;
+  FPublicKey.Free;
+  inherited;
+end;
+
+procedure TRSAKeyPair.FreeRSA;
+begin
+  if FRSA <> nil then
+  begin
+    RSA_free(FRSA);
+    FRSA := nil;
+  end;
+end;
+
+// Thanks for Allen Drennan
+// https://stackoverflow.com/questions/55229772/using-openssl-to-generate-keypairs/55239810#55239810
+procedure TRSAKeyPair.GenerateKey(KeySize: Integer);
+var
+  Bignum: PBIGNUM;
+begin
+  FreeRSA;
+
+  Bignum := BN_new();
+  try
+    if BN_set_word(Bignum, RSA_F4) = 1 then
+    begin
+      FRSA := RSA_new;
+      try
+        if BN_set_word(Bignum, RSA_F4) = 0 then
+          RaiseOpenSSLError('BN_set_word');
+
+        if RSA_generate_key_ex(FRSA, KeySize, Bignum, nil) = 0 then
+          RaiseOpenSSLError('RSA_generate_key_ex');
+      except
+        FreeRSA;
+        raise;
+      end;
+    end;
+  finally
+    BN_free(Bignum);
+  end;
+end;
+
+procedure TRSAKeyPair.GenerateKey;
+const
+  DefaultKeySize = 2048;
+begin
+  GenerateKey(DefaultKeySize);
+end;
+
 { TRSAPrivateKey }
 
 constructor TRSAPrivateKey.Create;
 begin
   inherited;
   FRSA := nil;
-end;
-
-destructor TRSAPrivateKey.Destroy;
-begin
-  FreeRSA;
-  inherited;
 end;
 
 procedure TRSAPrivateKey.FreeRSA;
@@ -371,66 +700,71 @@ end;
 
 function TRSAPrivateKey.GetRSA: PRSA;
 begin
-//  if Assigned(FCerificate) then
-//    Result := FCerificate.GetPublicRSA
-//  else
-    Result := FRSA;
+  Result := FRSA;
 end;
 
-function TRSAPrivateKey.IsValid: Boolean;
-begin
-  Result := GetRSA <> nil;
-end;
-
-function TRSAPrivateKey.Print: string;
-var
-  bp: PBIO;
-begin
-  bp := BIO_new(BIO_s_mem());
-  try
-    if RSA_print(bp, FRSA, 0) = 0 then
-      RaiseOpenSSLError('RSA_print');
-    Result := BIO_to_string(bp);
-  finally
-    BIO_free(bp);
-  end;
-end;
-
-procedure TRSAPrivateKey.LoadFromFile(const FileName: string);
-var
-  Stream: TStream;
-begin
-  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
-  try
-    LoadFromStream(Stream);
-  finally
-    Stream.Free;
-  end;
-end;
-
-procedure TRSAPrivateKey.LoadFromStream(AStream: TStream);
+procedure TRSAPrivateKey.LoadFromStream(AStream: TStream; AFormat: TPrivateKeyFormat = kpDefault);
 var
   KeyBuffer :pBIO;
   cb : ppem_password_cb;
+  pKey : PEVP_PKEY;
 begin
   cb := nil;
+  if Assigned(FOnNeedPassphrase) then
+    cb := @ReadKeyCallback;
 
   SetLength(FBuffer, AStream.Size);
   AStream.ReadBuffer(FBuffer[0], AStream.Size);
   KeyBuffer := BIO_new_mem_buf(FBuffer, Length(FBuffer));
-
-
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try
-    if Assigned(FOnNeedPassphrase) then
-      cb := @ReadKeyCallback;
-    FRSA := PEM_read_bio_RSAPrivateKey(KeyBuffer, nil, cb, Self);
-    if not Assigned(FRSA) then
-      RaiseOpenSSLError('RSA load private key error');
+
+    case AFormat of
+      kpDefault: begin
+
+        pKey := PEM_read_bio_PrivateKey(KeyBuffer, nil, cb, nil);
+        if not Assigned(pKey) then
+          RaiseOpenSSLError('PUBKEY load public key error');
+
+        try
+          FRSA := EVP_PKEY_get1_RSA(pKey);
+
+          if not Assigned(FRSA) then
+            RaiseOpenSSLError('RSA load public key error');
+        finally
+          EVP_PKEY_free(pKey);
+        end;
+      end;
+      kpRSAPrivateKey: begin
+        FRSA := PEM_read_bio_RSAPrivateKey(KeyBuffer, nil, cb, nil);
+        if not Assigned(FRSA) then
+          RaiseOpenSSLError('RSA load private key error');
+      end;
+      else
+        raise EOpenSSLError.Create('Invalid format');
+    end;
+
   finally
     BIO_free(KeyBuffer);
   end;
+end;
+
+{ TRSAKeyPairPrivateKey }
+
+constructor TRSAKeyPairPrivateKey.Create(KeyPair: TRSAKeyPair);
+begin
+  inherited Create;
+  FKeyPair := KeyPair;
+end;
+
+procedure TRSAKeyPairPrivateKey.FreeRSA;
+begin
+end;
+
+function TRSAKeyPairPrivateKey.GetRSA: PRSA;
+begin
+  Result := FKeyPair.FRSA;
 end;
 
 { TRSAPublicKey }
@@ -439,12 +773,6 @@ constructor TRSAPublicKey.Create;
 begin
   inherited;
   FRSA := nil;
-end;
-
-destructor TRSAPublicKey.Destroy;
-begin
-  FreeRSA;
-  inherited;
 end;
 
 procedure TRSAPublicKey.FreeRSA;
@@ -464,29 +792,8 @@ begin
     Result := FRSA;
 end;
 
-function TRSAPublicKey.IsValid: Boolean;
-begin
-  Result := GetRSA <> nil;
-end;
-
-procedure TRSAPublicKey.LoadFromCertificate(Cerificate: TX509Cerificate);
-begin
-  FCerificate := Cerificate;
-end;
-
-procedure TRSAPublicKey.LoadFromFile(const FileName: string);
-var
-  Stream: TStream;
-begin
-  Stream := TFileStream.Create(FileName, fmOpenRead or fmShareDenyWrite);
-  try
-    LoadFromStream(Stream);
-  finally
-    Stream.Free;
-  end;
-end;
-
-procedure TRSAPublicKey.LoadFromStream(AStream: TStream);
+procedure TRSAPublicKey.LoadFromStream(AStream: TStream;
+  AFormat: TPublicKeyFormat);
 var
   KeyBuffer :pBIO;
   pKey :PEVP_PKEY;
@@ -497,98 +804,50 @@ begin
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try
-    FRSA := PEM_read_bio_RSAPublicKey(KeyBuffer, nil, nil, nil);
-    if not Assigned(FRSA) then
-      RaiseOpenSSLError('RSA load public key error');
-  // Does'n work
-   {pKey := PEM_read_bio_PubKey(KeyBuffer, nil, nil, nil);
-    if not Assigned(pKey) then
-      RaiseOpenSSLError('PUBKEY load public key error');
+    case AFormat of
+      kfDefault: begin
+        pKey := PEM_read_bio_PubKey(KeyBuffer, nil, nil, nil);
+        if not Assigned(pKey) then
+          RaiseOpenSSLError('PUBKEY load public key error');
 
-    try
-      FRSA := EVP_PKEY_get1_RSA(pKey);
+        try
+          FRSA := EVP_PKEY_get1_RSA(pKey);
 
-      if not Assigned(FRSA) then
-        RaiseOpenSSLError('RSA load public key error');
-    finally
-      EVP_PKEY_free(pKey);
-    end;}
+          if not Assigned(FRSA) then
+            RaiseOpenSSLError('RSA load public key error');
+        finally
+          EVP_PKEY_free(pKey);
+        end;
+      end;
+      kfRSAPublicKey: begin
+        FRSA := PEM_read_bio_RSAPublicKey(KeyBuffer, nil, nil, nil);
+        if not Assigned(FRSA) then
+          RaiseOpenSSLError('RSA load public key error');
+      end;
+      else
+        raise EOpenSSLError.Create('Invalid format');
+    end;
   finally
     BIO_free(KeyBuffer);
   end;
 end;
 
-function TRSAPublicKey.Print: string;
-var
-  bp: PBIO;
+{ TRSAKeyPairPublicKey }
+
+constructor TRSAKeyPairPublicKey.Create(KeyPair: TRSAKeyPair);
 begin
-  bp := BIO_new(BIO_s_mem());
-  try
-    if RSA_print(bp, FRSA, 0) = 0 then
-      RaiseOpenSSLError('RSA_print');
-    Result := BIO_to_string(bp);
-  finally
-    BIO_free(bp);
-  end;
+  inherited Create;
+  FKeyPair := KeyPair;
 end;
 
-{ Stand alone Utils }
-
-// Thanks for Allen Drennan 
-// https://stackoverflow.com/questions/55229772/using-openssl-to-generate-keypairs/55239810#55239810
-function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes): Boolean;
+procedure TRSAKeyPairPublicKey.FreeRSA;
 begin
-  Result := CreateRSAKeyPairs_PKCS(APublicKey, APrivateKey, 2048);
+
 end;
 
-function CreateRSAKeyPairs_PKCS(out APublicKey, APrivateKey: TBytes; KeySize: Integer): Boolean;
-var
-  Bignum: PBIGNUM;
-  RSA: PRSA;
-  PrivateKey, PublicKey: PBIO;
-  KeyLength: Integer;
+function TRSAKeyPairPublicKey.GetRSA: PRSA;
 begin
-  Result := False;
-  Bignum := BN_new();
-  try
-    if BN_set_word(Bignum, RSA_F4) = 1 then
-    begin
-      RSA := RSA_new;
-      try
-        if RSA_generate_key_ex(RSA, KeySize, Bignum, nil) = 1 then
-        begin
-          { Write the public key }
-          PublicKey := BIO_new(BIO_s_mem);
-          try
-            PEM_write_bio_RSAPublicKey(PublicKey, RSA);
-            KeyLength := BIO_pending(PublicKey);
-            SetLength(APublicKey, KeyLength);
-            BIO_read(PublicKey, @APublicKey[0], KeyLength);
-          finally
-            BIO_free(PublicKey);
-          end;
-
-          { Write the private key }
-          PrivateKey := BIO_new(BIO_s_mem);
-          try
-            PEM_write_bio_RSAPrivateKey(PrivateKey, RSA, nil, nil, 0, nil, nil);
-            KeyLength := BIO_pending(PrivateKey);
-            SetLength(APrivateKey, KeyLength);
-            BIO_read(PrivateKey, @APrivateKey[0], KeyLength);
-          finally
-            BIO_free(PrivateKey);
-          end;
-
-          Result := True;
-        end;
-      finally
-        RSA_free(RSA);
-      end;
-    end;
-  finally
-    BN_free(Bignum);
-  end;
+  Result := FKeyPair.FRSA;
 end;
-
 
 end.
