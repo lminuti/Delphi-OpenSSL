@@ -1,6 +1,6 @@
 # Delphi OpenSSL Library
 
-[Delphi](http://www.embarcadero.com/products/delphi) implementation of [OpenSSL](https://openssl.org/).
+[Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](https://openssl.org/).
 
 ## Features
 
