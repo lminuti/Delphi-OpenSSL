@@ -29,7 +29,7 @@ interface
 
 uses
   System.Classes, System.SysUtils,
-  OpenSSL.libeay32, OpenSSL.Core, IdSSLOpenSSLHeaders;
+  OpenSSL.libeay32, OpenSSL.Core, OpenSSL.CMSHeaders, IdSSLOpenSSLHeaders;
 
 type
   TSMIMEUtil = class(TOpenSLLBase)
@@ -44,7 +44,7 @@ implementation
 function TSMIMEUtil.Decrypt(InputStream, OutputStream: TStream; Verify, NoVerify: Boolean): Integer;
 var
   LInput, LOutput, LContent: PBIO;
-  LPKCS7: PPKCS7;
+  LCMS_ContentInfo: PCMS_ContentInfo;
   LStore: PX509_STORE;
   LCerts: PSTACK_OF_X509;
   LFlags, LOutputLen: Integer;
@@ -68,10 +68,10 @@ begin
     if not Assigned(LInput) then
       RaiseOpenSSLError('BIO_new_file');
 
-    LPKCS7 := nil;
-    LPKCS7 := d2i_PKCS7_bio(LInput, LPKCS7);
+    LCMS_ContentInfo := nil;
+    LCMS_ContentInfo := d2i_CMS_bio(LInput, LCMS_ContentInfo);
 
-    if not Assigned(LPKCS7) then
+    if not Assigned(LCMS_ContentInfo) then
       RaiseOpenSSLError('FSMIME_read_PKCS7');
 
     LOutput := BIO_new(BIO_s_mem());
@@ -80,7 +80,7 @@ begin
 
     if Verify then
     begin
-      Result := PKCS7_verify(LPKCS7, LCerts, LStore, LContent, LOutput, LFlags);
+      Result := CMS_verify(LCMS_ContentInfo, LCerts, LStore, LContent, LOutput, LFlags);
 
       if Assigned(LOutput) and Assigned(OutputStream) then
       begin

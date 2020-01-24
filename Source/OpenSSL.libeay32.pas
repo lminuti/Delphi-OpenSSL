@@ -24,7 +24,7 @@ unit OpenSSL.libeay32;
 interface
 
 uses
-  System.Classes, System.SysUtils, IdSSLOpenSSLHeaders, IdSSLOpenSSL;
+  System.Classes, System.SysUtils, OpenSSL.CMSHeaders, IdSSLOpenSSLHeaders, IdSSLOpenSSL;
 
 const
   { S/MIME related flags }
@@ -78,6 +78,8 @@ var
 
   d2i_PKCS7_bio: function(bp: PBIO; var pkcs7: PPKCS7): PPKCS7; cdecl;
   PKCS7_verify: function(p7: PPKCS7; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
+  d2i_CMS_bio: function(bp: PBIO; var cms: PCMS_ContentInfo): PCMS_ContentInfo; cdecl;
+  CMS_verify: function(cms: PCMS_ContentInfo; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
   X509_STORE_new: function(): PX509_STORE; cdecl;
 
   RAND_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
@@ -161,6 +163,8 @@ begin
 
   d2i_PKCS7_bio := nil;
   PKCS7_verify := nil;
+  d2i_CMS_bio := nil;
+  CMS_verify := nil;
   X509_STORE_new := nil;
   RAND_bytes := nil;
   RAND_pseudo_bytes := nil;
@@ -198,6 +202,8 @@ begin
 
     d2i_PKCS7_bio := GetProcAddress(hSSL, 'd2i_PKCS7_bio');
     PKCS7_verify := GetProcAddress(hSSL, 'PKCS7_verify');
+    d2i_CMS_bio := GetProcAddress(hSSL, 'd2i_CMS_bio');
+    CMS_verify := GetProcAddress(hSSL, 'CMS_verify');
     X509_STORE_new := GetProcAddress(hSSL, 'X509_STORE_new');
     RAND_bytes := GetProcAddress(hSSL, 'RAND_bytes');
     RAND_pseudo_bytes := GetProcAddress(hSSL, 'RAND_pseudo_bytes');
