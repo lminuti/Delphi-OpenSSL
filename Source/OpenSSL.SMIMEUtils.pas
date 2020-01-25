@@ -34,27 +34,32 @@ uses
 type
   TSMIMEUtil = class(TOpenSLLBase)
   public
-    function Decrypt(InputStream, OutputStream :TStream; Verify, NoVerify: Boolean): Integer;
+    function Decrypt(InputStream, OutputStream :TStream; Verify, NoVerify: Boolean): Boolean;
   end;
 
 implementation
 
 { TSMIMEUtil }
 
-function TSMIMEUtil.Decrypt(InputStream, OutputStream: TStream; Verify, NoVerify: Boolean): Integer;
+function TSMIMEUtil.Decrypt(InputStream, OutputStream: TStream; Verify, NoVerify: Boolean): Boolean;
+const
+  BSIZE = 1024*8;
 var
   LInput, LOutput, LContent: PBIO;
   LCMS_ContentInfo: PCMS_ContentInfo;
   LStore: PX509_STORE;
   LCerts: PSTACK_OF_X509;
-  LFlags, LOutputLen: Integer;
+  LFlags, LRead, LOutputLen: Integer;
   LOutputBuffer, LInputBuffer: TBytes;
 begin
+  Result := False;
 
-  Result := 0;
+  if not (Assigned(InputStream) and Assigned(OutputStream))
+    then Exit; //raise?
+
   LFlags := 0;
-  if NoVerify then
-    LFlags := PKCS7_NOVERIFY;
+  if NoVerify
+    then LFlags := CMS_NOVERIFY;
   LContent := nil;
   LCerts := nil;
   LInput := nil;
@@ -78,20 +83,39 @@ begin
     if not Assigned(LOutput) then
       RaiseOpenSSLError('BIO_new');
 
+    LOutputLen := 0;
     if Verify then
     begin
-      Result := CMS_verify(LCMS_ContentInfo, LCerts, LStore, LContent, LOutput, LFlags);
-
-      if Assigned(LOutput) and Assigned(OutputStream) then
+      if CMS_verify(LCMS_ContentInfo, LCerts, LStore, LContent, LOutput, LFlags) > 0 then
       begin
         LOutputLen := LOutput.num_write;
         SetLength(LOutputBuffer, LOutputLen);
         BIO_read(LOutput, LOutputBuffer, LOutputLen);
-
-        OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
+      end;
+    end else
+    begin
+      LContent := CMS_dataInit(LCMS_ContentInfo, nil);
+      if Assigned(LContent) then
+      begin
+        SetLength(LOutputBuffer, BSIZE);
+        while ((BIO_pending(LContent) > 0)or(BIO_eof(LContent) = 0)) do
+        begin
+          LRead := BIO_read(LContent, LOutputBuffer, BSIZE);
+          if LRead < 0
+            then RaiseOpenSSLError('BIO_read');
+          if LRead = 0
+            then Break;
+        end;
+        LOutputLen := LContent.num_read;
       end;
     end;
+
+    Result := LOutputLen > 0;
+    if Result
+      then OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
   finally
+    if Assigned(LCMS_ContentInfo)
+      then CMS_free(LCMS_ContentInfo);
     BIO_free(LInput);
     BIO_free(LOutput);
     BIO_free(LContent);

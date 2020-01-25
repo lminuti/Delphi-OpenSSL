@@ -28,6 +28,30 @@ uses
 
 const
   { S/MIME related flags }
+  CMS_TEXT                  = $1;
+  CMS_NOCERTS               = $2;
+  CMS_NO_CONTENT_VERIFY     = $4;
+  CMS_NO_ATTR_VERIFY        = $8;
+  CMS_NOSIGS                = CMS_NO_CONTENT_VERIFY or CMS_NO_ATTR_VERIFY;
+  CMS_NOINTERN              = $10;
+  CMS_NO_SIGNER_CERT_VERIFY = $20;
+  CMS_NOVERIFY              = $20;
+  CMS_DETACHED              = $40;
+  CMS_BINARY                = $80;
+  CMS_NOATTR                = $100;
+  CMS_NOSMIMECAP            = $200;
+  CMS_NOOLDMIMETYPE         = $400;
+  CMS_CRLFEOL               = $800;
+  CMS_STREAM                = $1000;
+  CMS_NOCRL                 = $2000;
+  CMS_PARTIAL               = $4000;
+  CMS_REUSE_DIGEST          = $8000;
+  CMS_USE_KEYID             = $10000;
+  CMS_DEBUG_DECRYPT         = $20000;
+  CMS_KEY_PARAM             = $40000;
+  CMS_ASCIICRLF             = $80000;
+  CMS_CADES                 = $100000;
+
   PKCS7_TEXT              = $1;
   PKCS7_NOCERTS           = $2;
   PKCS7_NOSIGS            = $4;
@@ -80,6 +104,8 @@ var
   PKCS7_verify: function(p7: PPKCS7; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
   d2i_CMS_bio: function(bp: PBIO; var cms: PCMS_ContentInfo): PCMS_ContentInfo; cdecl;
   CMS_verify: function(cms: PCMS_ContentInfo; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
+  CMS_dataInit: function(cms: PCMS_ContentInfo; bp: PBIO): PBIO cdecl;
+  CMS_free: procedure(cms: PCMS_ContentInfo) cdecl;
   X509_STORE_new: function(): PX509_STORE; cdecl;
 
   RAND_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
@@ -165,6 +191,8 @@ begin
   PKCS7_verify := nil;
   d2i_CMS_bio := nil;
   CMS_verify := nil;
+  CMS_dataInit := nil;
+  CMS_free := nil;
   X509_STORE_new := nil;
   RAND_bytes := nil;
   RAND_pseudo_bytes := nil;
@@ -204,6 +232,8 @@ begin
     PKCS7_verify := GetProcAddress(hSSL, 'PKCS7_verify');
     d2i_CMS_bio := GetProcAddress(hSSL, 'd2i_CMS_bio');
     CMS_verify := GetProcAddress(hSSL, 'CMS_verify');
+    CMS_dataInit := GetProcAddress(hSSL, 'CMS_dataInit');
+    CMS_free := GetProcAddress(hSSL, 'CMS_ContentInfo_free');
     X509_STORE_new := GetProcAddress(hSSL, 'X509_STORE_new');
     RAND_bytes := GetProcAddress(hSSL, 'RAND_bytes');
     RAND_pseudo_bytes := GetProcAddress(hSSL, 'RAND_pseudo_bytes');

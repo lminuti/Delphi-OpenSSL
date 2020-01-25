@@ -33,7 +33,7 @@ uses
 procedure TUnpackPKCS7Frame.btnUnpackClick(Sender: TObject);
 var
   SMIME: TSMIMEUtil;
-  Verify: Integer;
+  Verify: Boolean;
   InputStream, OutputStream: TMemoryStream;
 begin
   SMIME := TSMIMEUtil.Create;
@@ -41,17 +41,20 @@ begin
   OutputStream := TMemoryStream.Create;
   try
     InputStream.LoadFromFile(edtInputFileName.Text);
-    Verify := SMIME.Decrypt(InputStream, OutputStream, chkVerify.Checked, chkNoVerify.Checked);
-
-    if chkVerify.Checked then
+    if not SMIME.Decrypt(InputStream, OutputStream, chkVerify.Checked, chkNoVerify.Checked) then
     begin
-      if Verify = 1 then
-        ShowMessage('Verification Successfull')
-      else
-        ShowMessage('Verification Failure')
+      if chkVerify.Checked
+        then ShowMessage('Verification Failure')
+        else ShowMessage('Decrypt Failure');
+      Exit;
     end;
 
     OutputStream.SaveToFile(edtOutputFileName.Text);
+
+    if chkVerify.Checked
+      then ShowMessage('Verification Successfull')
+      else ShowMessage('Decrypt Successfull');
+
     ShellExecute(Handle, 'open', PChar(edtOutputFileName.Text), '', '', SW_SHOWDEFAULT);
   finally
     InputStream.Free;
