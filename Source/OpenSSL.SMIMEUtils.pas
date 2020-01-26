@@ -115,7 +115,6 @@ begin
           OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
           Result := True;
         end;
-        LOutputLen := LContent.num_read;
       end;
     end;
   finally
