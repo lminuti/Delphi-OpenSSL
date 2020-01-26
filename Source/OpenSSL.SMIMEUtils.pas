@@ -35,6 +35,8 @@ type
   TSMIMEUtil = class(TOpenSLLBase)
   public
     function Decrypt(InputStream, OutputStream :TStream; Verify, NoVerify: Boolean): Boolean;
+    class function Extract(InputStream, OutputStream: TStream): Boolean;
+    class function Verify(InputStream, OutputStream: TStream; const Complete: Boolean = False): Boolean;
   end;
 
 implementation
@@ -49,7 +51,7 @@ var
   LCMS_ContentInfo: PCMS_ContentInfo;
   LStore: PX509_STORE;
   LCerts: PSTACK_OF_X509;
-  LFlags, LRead, LOutputLen: Integer;
+  LFlags, LOutputLen: Integer;
   LOutputBuffer, LInputBuffer: TBytes;
 begin
   Result := False;
@@ -83,14 +85,19 @@ begin
     if not Assigned(LOutput) then
       RaiseOpenSSLError('BIO_new');
 
-    LOutputLen := 0;
     if Verify then
     begin
       if CMS_verify(LCMS_ContentInfo, LCerts, LStore, LContent, LOutput, LFlags) > 0 then
       begin
         LOutputLen := LOutput.num_write;
+        if LOutputLen < 0
+          then RaiseOpenSSLError('CMS_verify');
+        if LOutputLen = 0
+          then Exit;
         SetLength(LOutputBuffer, LOutputLen);
         BIO_read(LOutput, LOutputBuffer, LOutputLen);
+        OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
+        Result := True;
       end;
     end else
     begin
@@ -100,25 +107,52 @@ begin
         SetLength(LOutputBuffer, BSIZE);
         while ((BIO_pending(LContent) > 0)or(BIO_eof(LContent) = 0)) do
         begin
-          LRead := BIO_read(LContent, LOutputBuffer, BSIZE);
-          if LRead < 0
+          LOutputLen := BIO_read(LContent, LOutputBuffer, BSIZE);
+          if LOutputLen < 0
             then RaiseOpenSSLError('BIO_read');
-          if LRead = 0
+          if LOutputLen = 0
             then Break;
+          OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
+          Result := True;
         end;
         LOutputLen := LContent.num_read;
       end;
     end;
-
-    Result := LOutputLen > 0;
-    if Result
-      then OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
   finally
     if Assigned(LCMS_ContentInfo)
       then CMS_free(LCMS_ContentInfo);
     BIO_free(LInput);
     BIO_free(LOutput);
     BIO_free(LContent);
+  end;
+end;
+
+class function TSMIMEUtil.Extract(InputStream, OutputStream: TStream): Boolean;
+begin
+  try
+    with TSMIMEUtil.Create do
+    try
+      Result := Decrypt(InputStream, OutputStream, False, False);
+    finally
+      Free;
+    end;
+  except
+    Result := False;
+  end;
+end;
+
+class function TSMIMEUtil.Verify(InputStream, OutputStream: TStream;
+  const Complete: Boolean): Boolean;
+begin
+  try
+    with TSMIMEUtil.Create do
+    try
+      Result := Decrypt(InputStream, OutputStream, True, not Complete);
+    finally
+      Free;
+    end;
+  except
+    Result := False;
   end;
 end;
 
