@@ -45,7 +45,7 @@ begin
     begin
       if chkVerify.Checked
         then ShowMessage('Verification Failure')
-        else ShowMessage('Decrypt Failure');
+        else ShowMessage('Extraction Failure');
       Exit;
     end;
 
@@ -53,7 +53,7 @@ begin
 
     if chkVerify.Checked
       then ShowMessage('Verification Successfull')
-      else ShowMessage('Decrypt Successfull');
+      else ShowMessage('Extraction Successfull');
 
     ShellExecute(Handle, 'open', PChar(edtOutputFileName.Text), '', '', SW_SHOWDEFAULT);
   finally

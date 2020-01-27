@@ -25,7 +25,7 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
   object edtInputFileName: TEdit
     Left = 60
     Top = 16
-    Width = 380
+    Width = 374
     Height = 21
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
@@ -34,7 +34,7 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
   object edtOutputFileName: TEdit
     Left = 60
     Top = 43
-    Width = 380
+    Width = 374
     Height = 21
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
