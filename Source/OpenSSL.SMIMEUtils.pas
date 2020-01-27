@@ -34,16 +34,17 @@ uses
 type
   TSMIMEUtil = class(TOpenSLLBase)
   public
-    function Decrypt(InputStream, OutputStream :TStream; Verify, NoVerify: Boolean): Boolean;
+    function Decrypt(InputStream, OutputStream: TStream; const CAfile: AnsiString; Verify, NoVerify: Boolean): Boolean;
     class function Extract(InputStream, OutputStream: TStream): Boolean;
-    class function Verify(InputStream, OutputStream: TStream; const Complete: Boolean = False): Boolean;
+    class function Verify(InputStream, OutputStream: TStream; const CAfile: AnsiString = ''): Boolean;
   end;
 
 implementation
 
 { TSMIMEUtil }
 
-function TSMIMEUtil.Decrypt(InputStream, OutputStream: TStream; Verify, NoVerify: Boolean): Boolean;
+function TSMIMEUtil.Decrypt(InputStream, OutputStream: TStream;
+  const CAfile: AnsiString; Verify, NoVerify: Boolean): Boolean;
 const
   BSIZE = 1024*8;
 var
@@ -66,7 +67,7 @@ begin
   LCerts := nil;
   LInput := nil;
   LOutput := nil;
-  LStore := X509_STORE_new();
+  LStore := nil;
   try
     SetLength(LInputBuffer, InputStream.Size);
     InputStream.ReadBuffer(LInputBuffer[0], InputStream.Size);
@@ -87,6 +88,13 @@ begin
 
     if Verify then
     begin
+      LStore := X509_STORE_new();
+      if (not NoVerify)and(CAfile <> '') then
+      begin
+        if X509_STORE_load_locations(LStore, PAnsiChar(CAfile), nil) = 0
+          then RaiseOpenSSLError('X509_STORE_load_locations');
+      end;
+
       if CMS_verify(LCMS_ContentInfo, LCerts, LStore, LContent, LOutput, LFlags) > 0 then
       begin
         LOutputLen := LOutput.num_write;
@@ -118,11 +126,11 @@ begin
       end;
     end;
   finally
-    if Assigned(LCMS_ContentInfo)
-      then CMS_free(LCMS_ContentInfo);
     BIO_free(LInput);
     BIO_free(LOutput);
     BIO_free(LContent);
+    CMS_free(LCMS_ContentInfo);
+    X509_STORE_free(LStore);
   end;
 end;
 
@@ -131,7 +139,7 @@ begin
   try
     with TSMIMEUtil.Create do
     try
-      Result := Decrypt(InputStream, OutputStream, False, False);
+      Result := Decrypt(InputStream, OutputStream, '', False, False);
     finally
       Free;
     end;
@@ -141,12 +149,12 @@ begin
 end;
 
 class function TSMIMEUtil.Verify(InputStream, OutputStream: TStream;
-  const Complete: Boolean): Boolean;
+  const CAfile: AnsiString): Boolean;
 begin
   try
     with TSMIMEUtil.Create do
     try
-      Result := Decrypt(InputStream, OutputStream, True, not Complete);
+      Result := Decrypt(InputStream, OutputStream, CAfile, True, CAfile = '');
     finally
       Free;
     end;

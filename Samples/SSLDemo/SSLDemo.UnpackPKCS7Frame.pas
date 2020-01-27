@@ -15,6 +15,8 @@ type
     btnUnpack: TButton;
     chkVerify: TCheckBox;
     chkNoVerify: TCheckBox;
+    edtCertFileName: TEdit;
+    lblCertFile: TLabel;
     procedure btnUnpackClick(Sender: TObject);
   private
     { Private declarations }
@@ -33,7 +35,6 @@ uses
 procedure TUnpackPKCS7Frame.btnUnpackClick(Sender: TObject);
 var
   SMIME: TSMIMEUtil;
-  Verify: Boolean;
   InputStream, OutputStream: TMemoryStream;
 begin
   SMIME := TSMIMEUtil.Create;
@@ -41,7 +42,7 @@ begin
   OutputStream := TMemoryStream.Create;
   try
     InputStream.LoadFromFile(edtInputFileName.Text);
-    if not SMIME.Decrypt(InputStream, OutputStream, chkVerify.Checked, chkNoVerify.Checked) then
+    if not SMIME.Decrypt(InputStream, OutputStream, AnsiString(edtCertFileName.Text), chkVerify.Checked, chkNoVerify.Checked) then
     begin
       if chkVerify.Checked
         then ShowMessage('Verification Failure')
@@ -71,6 +72,7 @@ begin
   TestFolder := StringReplace(ExtractFilePath(ParamStr(0)), 'Samples\SSLDemo', 'TestData', [rfReplaceAll, rfIgnoreCase]);
   edtInputFileName.Text := TestFolder + 'TestPKCS7.pdf.p7m';
   edtOutputFileName.Text := TestFolder + 'TestPKCS7-out.pdf';
+  edtCertFileName.Text := TestFolder + 'TestPKCS7-cert.pem';
 end;
 
 end.

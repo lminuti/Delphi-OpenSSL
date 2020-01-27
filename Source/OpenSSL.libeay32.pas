@@ -107,6 +107,7 @@ var
   CMS_dataInit: function(cms: PCMS_ContentInfo; bp: PBIO): PBIO cdecl;
   CMS_free: procedure(cms: PCMS_ContentInfo) cdecl;
   X509_STORE_new: function(): PX509_STORE; cdecl;
+  X509_STORE_free: procedure(v: PX509_STORE); cdecl;
 
   RAND_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
   RAND_pseudo_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
@@ -194,6 +195,7 @@ begin
   CMS_dataInit := nil;
   CMS_free := nil;
   X509_STORE_new := nil;
+  X509_STORE_free := nil;
   RAND_bytes := nil;
   RAND_pseudo_bytes := nil;
   RAND_status := nil;
@@ -235,6 +237,8 @@ begin
     CMS_dataInit := GetProcAddress(hSSL, 'CMS_dataInit');
     CMS_free := GetProcAddress(hSSL, 'CMS_ContentInfo_free');
     X509_STORE_new := GetProcAddress(hSSL, 'X509_STORE_new');
+    X509_STORE_free := GetProcAddress(hSSL, 'X509_STORE_free');
+
     RAND_bytes := GetProcAddress(hSSL, 'RAND_bytes');
     RAND_pseudo_bytes := GetProcAddress(hSSL, 'RAND_pseudo_bytes');
     RAND_status := GetProcAddress(hSSL, 'RAND_status');
