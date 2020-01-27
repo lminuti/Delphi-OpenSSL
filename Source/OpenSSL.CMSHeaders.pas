@@ -3,13 +3,13 @@ unit OpenSSL.CMSHeaders;
 interface
 
 uses
-  IdSSLOpenSSLHeaders;
+  IdSSLOpenSSLHeaders, idCTypes;
 
 type
   {$IFDEF DEBUG_SAFESTACK}
     {$EXTERNALSYM STACK_OF_CMS_CertificateChoices}
     STACK_OF_CMS_CertificateChoices = record
-      _stack: stack;
+      _stack: STACK;
     end;
     {$EXTERNALSYM PSTACK_OF_CMS_CertificateChoices}
     PSTACK_OF_CMS_CertificateChoices = ^STACK_OF_CMS_CertificateChoices;
@@ -18,14 +18,14 @@ type
     PSTACK_OF_CMS_RevocationInfoChoice = ^STACK_OF_CMS_RevocationInfoChoice;
     {$EXTERNALSYM STACK_OF_CMS_RevocationInfoChoice}
     STACK_OF_CMS_RevocationInfoChoice = record
-      _stack: stack;
+      _stack: STACK;
     end;
 
     {$EXTERNALSYM PSTACK_OF_CMS_RecipientInfo}
     PSTACK_OF_CMS_RecipientInfo = ^STACK_OF_CMS_RecipientInfo;
     {$EXTERNALSYM STACK_OF_CMS_RecipientInfo}
     STACK_OF_CMS_RecipientInfo = record
-      _stack: stack;
+      _stack: STACK;
     end;
   {$ELSE}
     {$EXTERNALSYM PSTACK_OF_CMS_CertificateChoices}
@@ -43,14 +43,14 @@ type
     eContentType: PASN1_OBJECT;
     eContent: PASN1_OCTET_STRING;
     // Set to 1 if incomplete structure only part set up
-    partial: Integer;
+    partial: TIdC_INT;
   end;
 
   {$EXTERNALSYM PCMS_SignedData}
   PCMS_SignedData = ^CMS_SignedData;
   {$EXTERNALSYM CMS_SignedData}
   CMS_SignedData = record
-    version: Int32;
+    version: TIdC_INT32;
     digestAlgorithms: PSTACK_OF_X509_ALGOR;
     encapContentInfo: PCMS_EncapsulatedContentInfo;
     certificates: PSTACK_OF_CMS_CertificateChoices;
@@ -76,18 +76,18 @@ type
     // Content encryption algorithm and key
     cipher: PEVP_CIPHER; //const ?
     key: PAnsiChar;
-    keylen: Cardinal;
+    keylen: NativeUInt; //size_t in C
     //Set to 1 if we are debugging decrypt and don't fake keys for MMA
-    debug: Integer;
+    debug: TIdC_INT;
     // Set to 1 if we have no cert and need extra safety measures for MMA
-    havenocert: Integer;
+    havenocert: TIdC_INT;
   end;
 
   {$EXTERNALSYM PCMS_EnvelopedData}
   PCMS_EnvelopedData = ^CMS_EnvelopedData;
   {$EXTERNALSYM CMS_EnvelopedData}
   CMS_EnvelopedData = record
-    version: Int32;
+    version: TIdC_INT32;
     originatorInfo: PCMS_OriginatorInfo;
     recipientInfos: PSTACK_OF_CMS_RecipientInfo;
     encryptedContentInfo: PCMS_EncryptedContentInfo;
@@ -98,7 +98,7 @@ type
   PCMS_DigestedData = ^CMS_DigestedData;
   {$EXTERNALSYM CMS_DigestedData}
   CMS_DigestedData = record
-    version: Int32;
+    version: TIdC_INT32;
     digestAlgorithm: PX509_ALGOR;
     encapContentInfo: PCMS_EncapsulatedContentInfo;
     digest: PASN1_OCTET_STRING;
@@ -108,7 +108,7 @@ type
   PCMS_EncryptedData = ^CMS_EncryptedData;
   {$EXTERNALSYM CMS_EncryptedData}
   CMS_EncryptedData = record
-    version: Int32;
+    version: TIdC_INT32;
     encryptedContentInfo: PCMS_EncryptedContentInfo;
     unprotectedAttrs: PSTACK_OF_X509_ATTRIBUTE;
   end;
@@ -117,7 +117,7 @@ type
   PCMS_AuthenticatedData = ^CMS_AuthenticatedData;
   {$EXTERNALSYM CMS_AuthenticatedData}
   CMS_AuthenticatedData = record
-    version: Int32;
+    version: TIdC_INT32;
     originatorInfo: PCMS_OriginatorInfo;
     recipientInfos: PSTACK_OF_CMS_RecipientInfo;
     macAlgorithm: PX509_ALGOR;
@@ -132,7 +132,7 @@ type
   PCMS_CompressedData = ^CMS_CompressedData;
   {$EXTERNALSYM CMS_CompressedData}
   CMS_CompressedData = record
-    version: Int32;
+    version: TIdC_INT32;
     compressionAlgorithm: PX509_ALGOR;
     recipientInfos: PSTACK_OF_CMS_RecipientInfo;
     encapContentInfo: PCMS_EncapsulatedContentInfo;
