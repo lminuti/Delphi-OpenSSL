@@ -57,7 +57,7 @@ var
 begin
   Result := False;
 
-  if not (Assigned(InputStream) and Assigned(OutputStream))
+  if not Assigned(InputStream)
     then Exit; //raise?
 
   LFlags := 0;
@@ -104,7 +104,8 @@ begin
           then Exit;
         SetLength(LOutputBuffer, LOutputLen);
         BIO_read(LOutput, LOutputBuffer, LOutputLen);
-        OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
+        if Assigned(OutputStream)
+          then OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
         Result := True;
       end;
     end else
@@ -120,7 +121,8 @@ begin
             then RaiseOpenSSLError('BIO_read');
           if LOutputLen = 0
             then Break;
-          OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
+          if Assigned(OutputStream)
+            then OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
           Result := True;
         end;
       end;
