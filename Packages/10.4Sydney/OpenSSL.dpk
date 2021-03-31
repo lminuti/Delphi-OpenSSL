@@ -41,6 +41,7 @@ contains
   OpenSSL.libeay32 in '..\..\Source\OpenSSL.libeay32.pas',
   OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas',
   OpenSSL.RSAUtils in '..\..\Source\OpenSSL.RSAUtils.pas',
-  OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas';
+  OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas',
+  OpenSSL.CMSHeaders in '..\..\Source\OpenSSL.CMSHeaders.pas';
 
 end.
