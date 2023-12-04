@@ -474,7 +474,10 @@ begin
   try
     for CipherInfo in LocalCipherList do
       if CipherInfo.Name = Name then
+      begin
         Result := CipherInfo.Proc;
+        Break;
+      end;
   finally
     UnlockList;
   end;
