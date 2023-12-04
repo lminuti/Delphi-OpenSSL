@@ -22,10 +22,18 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Output file:'
   end
+  object lblCertFile: TLabel
+    Left = 5
+    Top = 73
+    Width = 35
+    Height = 13
+    Anchors = [akLeft, akTop, akRight]
+    Caption = 'CA file:'
+  end
   object edtInputFileName: TEdit
     Left = 60
     Top = 16
-    Width = 380
+    Width = 374
     Height = 21
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 0
@@ -34,16 +42,16 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
   object edtOutputFileName: TEdit
     Left = 60
     Top = 43
-    Width = 380
+    Width = 374
     Height = 21
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 1
-    Text = 'edtInputFileName'
+    Text = 'edtOutputFileName'
   end
   object btnUnpack: TButton
     AlignWithMargins = True
     Left = 3
-    Top = 70
+    Top = 102
     Width = 431
     Height = 25
     Caption = 'Unpack'
@@ -52,7 +60,7 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
   end
   object chkVerify: TCheckBox
     Left = 3
-    Top = 120
+    Top = 152
     Width = 182
     Height = 17
     Caption = 'Verify (no output data provided)'
@@ -62,7 +70,7 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
   end
   object chkNoVerify: TCheckBox
     Left = 221
-    Top = 112
+    Top = 144
     Width = 213
     Height = 33
     Caption = 
@@ -72,5 +80,14 @@ object UnpackPKCS7Frame: TUnpackPKCS7Frame
     State = cbChecked
     TabOrder = 4
     WordWrap = True
+  end
+  object edtCertFileName: TEdit
+    Left = 60
+    Top = 70
+    Width = 374
+    Height = 21
+    Anchors = [akLeft, akTop, akRight]
+    TabOrder = 5
+    Text = 'edtCertFileName'
   end
 end

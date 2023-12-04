@@ -35,7 +35,8 @@ uses
   SSLDemo.RandFrame in 'SSLDemo.RandFrame.pas' {RandomFrame: TFrame},
   SSLDemo.UnpackPKCS7Frame in 'SSLDemo.UnpackPKCS7Frame.pas' {UnpackPKCS7Frame: TFrame},
   OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas',
-  SSLDemo.KeyPairFrame in 'SSLDemo.KeyPairFrame.pas' {KeyPairFrame: TFrame};
+  SSLDemo.KeyPairFrame in 'SSLDemo.KeyPairFrame.pas' {KeyPairFrame: TFrame},
+  OpenSSL.CMSHeaders in '..\..\Source\OpenSSL.CMSHeaders.pas';
 
 {$R *.res}
 

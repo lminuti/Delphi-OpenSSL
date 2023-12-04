@@ -15,6 +15,8 @@ type
     btnUnpack: TButton;
     chkVerify: TCheckBox;
     chkNoVerify: TCheckBox;
+    edtCertFileName: TEdit;
+    lblCertFile: TLabel;
     procedure btnUnpackClick(Sender: TObject);
   private
     { Private declarations }
@@ -33,7 +35,6 @@ uses
 procedure TUnpackPKCS7Frame.btnUnpackClick(Sender: TObject);
 var
   SMIME: TSMIMEUtil;
-  Verify: Integer;
   InputStream, OutputStream: TMemoryStream;
 begin
   SMIME := TSMIMEUtil.Create;
@@ -41,17 +42,20 @@ begin
   OutputStream := TMemoryStream.Create;
   try
     InputStream.LoadFromFile(edtInputFileName.Text);
-    Verify := SMIME.Decrypt(InputStream, OutputStream, chkVerify.Checked, chkNoVerify.Checked);
-
-    if chkVerify.Checked then
+    if not SMIME.Decrypt(InputStream, OutputStream, AnsiString(edtCertFileName.Text), chkVerify.Checked, chkNoVerify.Checked) then
     begin
-      if Verify = 1 then
-        ShowMessage('Verification Successfull')
-      else
-        ShowMessage('Verification Failure')
+      if chkVerify.Checked
+        then ShowMessage('Verification Failure')
+        else ShowMessage('Extraction Failure');
+      Exit;
     end;
 
     OutputStream.SaveToFile(edtOutputFileName.Text);
+
+    if chkVerify.Checked
+      then ShowMessage('Verification Successfull')
+      else ShowMessage('Extraction Successfull');
+
     ShellExecute(Handle, 'open', PChar(edtOutputFileName.Text), '', '', SW_SHOWDEFAULT);
   finally
     InputStream.Free;
@@ -68,6 +72,7 @@ begin
   TestFolder := StringReplace(ExtractFilePath(ParamStr(0)), 'Samples\SSLDemo', 'TestData', [rfReplaceAll, rfIgnoreCase]);
   edtInputFileName.Text := TestFolder + 'TestPKCS7.pdf.p7m';
   edtOutputFileName.Text := TestFolder + 'TestPKCS7-out.pdf';
+  edtCertFileName.Text := TestFolder + 'TestPKCS7-cert.pem';
 end;
 
 end.
