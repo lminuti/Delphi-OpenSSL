@@ -9,10 +9,10 @@ __history
 *.stat
 TestData/.rnd
 *.pem
-*.txt
 *.certcry
 *.keycry
 .rnd
 TestData/*.cnf
 TestData/*.p7m
 TestData/TestPKCS7-out.pdf
+Packages/12.0AthensAndAbove/37.0
