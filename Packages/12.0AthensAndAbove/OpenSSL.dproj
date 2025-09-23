@@ -119,7 +119,6 @@
         <DCCReference Include="..\..\Source\OpenSSL.RandUtils.pas"/>
         <DCCReference Include="..\..\Source\OpenSSL.RSAUtils.pas"/>
         <DCCReference Include="..\..\Source\OpenSSL.SMIMEUtils.pas"/>
-        <DCCReference Include="..\..\Source\OpenSSL.CMSHeaders.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
