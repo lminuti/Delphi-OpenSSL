@@ -91,8 +91,10 @@ type
 
     procedure Encrypt(InputStream :TStream; OutputStream :TStream); overload;
     procedure Encrypt(const InputFileName, OutputFileName :TFileName); overload;
+    procedure Encrypt(const InputBytes: TBytes; out OutputBytes: TBytes); overload;
     procedure Decrypt(InputStream :TStream; OutputStream :TStream); overload;
     procedure Decrypt(const InputFileName, OutputFileName :TFileName); overload;
+    procedure Decrypt(const InputBytes: TBytes; out OutputBytes: TBytes); overload;
   end;
 
 implementation
@@ -445,9 +447,68 @@ begin
   end;
 end;
 
+procedure TEncUtil.Decrypt(const InputBytes: TBytes; out OutputBytes: TBytes);
+var
+  InputStream: TBytesStream;
+  OutputStream: TBytesStream;
+begin
+  // Caso o array de entrada esteja vazio, retornamos um array vazio
+  if Length(InputBytes) = 0 then
+  begin
+    SetLength(OutputBytes, 0);
+    Exit;
+  end;
+
+  InputStream := TBytesStream.Create(InputBytes);
+  OutputStream := TBytesStream.Create;
+  try
+    // Chama a sua função principal: Decrypt(InputStream, OutputStream)
+    Decrypt(InputStream, OutputStream);
+
+    // Transfere o resultado para o array de saída
+    OutputBytes := OutputStream.Bytes;
+
+    // Garante que o tamanho do array corresponde exatamente ao tamanho do stream
+    SetLength(OutputBytes, OutputStream.Size);
+  finally
+    InputStream.Free;
+    OutputStream.Free;
+  end;
+end;
+
+
 class destructor TEncUtil.Destroy;
 begin
   FCipherList.Free;
+end;
+
+procedure TEncUtil.Encrypt(const InputBytes: TBytes; out OutputBytes: TBytes);
+var
+  InputStream: TBytesStream;
+  OutputStream: TBytesStream;
+begin
+  // Se o input estiver vazio, garantimos que o output também fique
+  if Length(InputBytes) = 0 then
+  begin
+    SetLength(OutputBytes, 0);
+    Exit;
+  end;
+
+  InputStream := TBytesStream.Create(InputBytes);
+  OutputStream := TBytesStream.Create;
+  try
+    // Chama a sua função principal que já processa Streams
+    Encrypt(InputStream, OutputStream);
+
+    // Extrai o resultado do Stream de saída para o array de bytes
+    OutputBytes := OutputStream.Bytes;
+
+    // Ajusta o tamanho real (o stream pode ter um buffer maior que os dados)
+    SetLength(OutputBytes, OutputStream.Size);
+  finally
+    InputStream.Free;
+    OutputStream.Free;
+  end;
 end;
 
 { TCipherList }
