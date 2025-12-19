@@ -118,15 +118,15 @@ end;
 class function TRandUtil.LoadSeedFromFile(const FileName: string;
   MaxBytes: Integer): Integer;
 begin
-  Result := RAND_load_file(@FileName[1], MaxBytes);
+  Result := RAND_load_file(PAnsiChar(AnsiString(FileName)), MaxBytes);
   if Result < 0 then
     RaiseOpenSSLError('RAND_load_file error');
 end;
 
 class function TRandUtil.SaveSeedToFile(const FileName: string): Integer;
 begin
-  Result := RAND_write_file(@FileName[1]);
-  if Result < 0 then
+  Result := RAND_write_file(PAnsiChar(AnsiString(FileName)));
+  if Result <= 0 then
     RaiseOpenSSLError('RAND_write_file error');
 end;
 

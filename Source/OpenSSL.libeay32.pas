@@ -86,7 +86,7 @@ var
   RAND_poll: function: Integer cdecl;
   RAND_file_name: function (buf: PAnsiChar; num: Integer): PAnsiChar cdecl;
   RAND_load_file: function (filename: PAnsiChar; max_bytes: Integer): Integer cdecl;
-  RAND_write_file: function (filename: PAnsiChar): Integer;
+  RAND_write_file: function (filename: PAnsiChar): Integer cdecl;
 
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;

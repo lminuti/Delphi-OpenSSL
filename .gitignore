@@ -9,6 +9,7 @@ __history
 *.stat
 TestData/.rnd
 *.pem
+*.ini
 *.certcry
 *.keycry
 .rnd
