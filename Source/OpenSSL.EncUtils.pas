@@ -452,7 +452,7 @@ var
   InputStream: TBytesStream;
   OutputStream: TBytesStream;
 begin
-  // Caso o array de entrada esteja vazio, retornamos um array vazio
+  // If input array is empty, return an empty array
   if Length(InputBytes) = 0 then
   begin
     SetLength(OutputBytes, 0);
@@ -460,19 +460,22 @@ begin
   end;
 
   InputStream := TBytesStream.Create(InputBytes);
-  OutputStream := TBytesStream.Create;
   try
-    // Chama a sua função principal: Decrypt(InputStream, OutputStream)
-    Decrypt(InputStream, OutputStream);
+    OutputStream := TBytesStream.Create;
+    try
+      // Call the main decrypt function
+      Decrypt(InputStream, OutputStream);
 
-    // Transfere o resultado para o array de saída
-    OutputBytes := OutputStream.Bytes;
+      // Transfer the result to the output array
+      OutputBytes := OutputStream.Bytes;
 
-    // Garante que o tamanho do array corresponde exatamente ao tamanho do stream
-    SetLength(OutputBytes, OutputStream.Size);
+      // Ensure the array size matches exactly the stream size
+      SetLength(OutputBytes, OutputStream.Size);
+    finally
+      OutputStream.Free;
+    end;
   finally
     InputStream.Free;
-    OutputStream.Free;
   end;
 end;
 
@@ -487,7 +490,7 @@ var
   InputStream: TBytesStream;
   OutputStream: TBytesStream;
 begin
-  // Se o input estiver vazio, garantimos que o output também fique
+  // If input is empty, ensure output is also empty
   if Length(InputBytes) = 0 then
   begin
     SetLength(OutputBytes, 0);
@@ -495,19 +498,22 @@ begin
   end;
 
   InputStream := TBytesStream.Create(InputBytes);
-  OutputStream := TBytesStream.Create;
   try
-    // Chama a sua função principal que já processa Streams
-    Encrypt(InputStream, OutputStream);
+    OutputStream := TBytesStream.Create;
+    try
+      // Call the main encrypt function that processes streams
+      Encrypt(InputStream, OutputStream);
 
-    // Extrai o resultado do Stream de saída para o array de bytes
-    OutputBytes := OutputStream.Bytes;
+      // Extract the result from the output stream to the byte array
+      OutputBytes := OutputStream.Bytes;
 
-    // Ajusta o tamanho real (o stream pode ter um buffer maior que os dados)
-    SetLength(OutputBytes, OutputStream.Size);
+      // Adjust to the real size (the stream may have a larger buffer than the data)
+      SetLength(OutputBytes, OutputStream.Size);
+    finally
+      OutputStream.Free;
+    end;
   finally
     InputStream.Free;
-    OutputStream.Free;
   end;
 end;
 
