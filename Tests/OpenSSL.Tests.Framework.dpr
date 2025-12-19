@@ -41,6 +41,8 @@ uses
   OpenSSL.Tests.Core in 'OpenSSL.Tests.Core.pas',
   OpenSSL.Tests.RandUtils in 'OpenSSL.Tests.RandUtils.pas',
   OpenSSL.Tests.RSAUtils in 'OpenSSL.Tests.RSAUtils.pas',
+  OpenSSL.Tests.EncUtils in 'OpenSSL.Tests.EncUtils.pas',
+  OpenSSL.Tests.SMIMEUtils in 'OpenSSL.Tests.SMIMEUtils.pas',
   OpenSSL.Core in '..\Source\OpenSSL.Core.pas',
   OpenSSL.EncUtils in '..\Source\OpenSSL.EncUtils.pas',
   OpenSSL.libeay32 in '..\Source\OpenSSL.libeay32.pas',

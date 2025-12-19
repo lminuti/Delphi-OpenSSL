@@ -92,9 +92,11 @@ type
     procedure Encrypt(InputStream :TStream; OutputStream :TStream); overload;
     procedure Encrypt(const InputFileName, OutputFileName :TFileName); overload;
     procedure Encrypt(const InputBytes: TBytes; out OutputBytes: TBytes); overload;
+    function EncryptStr(const InputStr: string; Encoding: TEncoding = nil): string;
     procedure Decrypt(InputStream :TStream; OutputStream :TStream); overload;
     procedure Decrypt(const InputFileName, OutputFileName :TFileName); overload;
     procedure Decrypt(const InputBytes: TBytes; out OutputBytes: TBytes); overload;
+    function DecryptStr(const InputStr: string; Encoding: TEncoding = nil): string;
   end;
 
 implementation
@@ -515,6 +517,36 @@ begin
   finally
     InputStream.Free;
   end;
+end;
+
+function TEncUtil.EncryptStr(const InputStr: string; Encoding: TEncoding): string;
+var
+  InputBytes, EncryptedBytes: TBytes;
+  ActualEncoding: TEncoding;
+begin
+  if Encoding = nil then
+    ActualEncoding := TEncoding.UTF8
+  else
+    ActualEncoding := Encoding;
+
+  InputBytes := ActualEncoding.GetBytes(InputStr);
+  Encrypt(InputBytes, EncryptedBytes);
+  Result := TEncoding.ANSI.GetString(Base64Encode(EncryptedBytes));
+end;
+
+function TEncUtil.DecryptStr(const InputStr: string; Encoding: TEncoding): string;
+var
+  InputBytes, DecryptedBytes: TBytes;
+  ActualEncoding: TEncoding;
+begin
+  if Encoding = nil then
+    ActualEncoding := TEncoding.UTF8
+  else
+    ActualEncoding := Encoding;
+
+  InputBytes := Base64Decode(TEncoding.ANSI.GetBytes(InputStr));
+  Decrypt(InputBytes, DecryptedBytes);
+  Result := ActualEncoding.GetString(DecryptedBytes);
 end;
 
 { TCipherList }
