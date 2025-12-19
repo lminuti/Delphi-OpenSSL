@@ -1,6 +1,6 @@
 # Delphi OpenSSL Library
 
-[Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](https://openssl.org/).
+A [Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](https://openssl.org/), providing high-level object-oriented interfaces for cryptographic operations. This library simplifies the use of OpenSSL's powerful encryption capabilities in Delphi applications, offering easy-to-use classes for RSA encryption, symmetric ciphers, digital signatures, and certificate handling.
 
 ## Features
 
@@ -127,7 +127,33 @@ end;
 
 ## Prerequisite
 
-OpenSSL library must be in your system path
+### Installing OpenSSL
+
+If your application requires OpenSSL support, you must have the necessary library files in your file system before deploying your application.
+
+| Platform | Download Required | File Names | Static/Dynamic Linking |
+|----------|------------------|------------|----------------------|
+| Windows (32-bit and 64-bit) | Yes | libeay32.dll and ssleay32.dll | Dynamic |
+| iOS Device | Yes | libcrypto.a and libssl.a | Static |
+| Android Device | No | | Dynamic |
+
+Review the requirements below depending on the platform that you are using:
+
+#### 32-bit and 64-bit Windows
+
+To install OpenSSL on 32-bit or 64-bit Windows, you need to copy the **libeay32.dll** and **ssleay32.dll** dynamic library files to your file system; you can download them from one of these locations:
+
+- **Option 1** - Download the [OpenSSL installer files](http://slproweb.com/products/Win32OpenSSL.html) and install them.
+- **Option 2** - Download the [OpenSSL compressed library files](https://github.com/IndySockets/OpenSSL-Binaries) and copy the libeay32.dll and ssleay32.dll files to your system path.
+
+If you go for Option 2 and decide to copy libeay32.dll and ssleay32.dll files to your system path, ensure you copy them to the right location:
+
+- **32-bit Windows**: You must copy the libeay32.dll and ssleay32.dll 32-bit files to your Windows system folder (System32 folder).
+- **64-bit Windows**: You must copy the libeay32.dll and ssleay32.dll 64-bit files to your Windows system folder for 64-bit files (System32) and the libeay32.dll and ssleay32.dll 32-bit files to your Windows 32-bit files folder (SysWOW64 folder).
+
+So when working with a 64-bit Windows, remember:
+- **System32 folder** is for 64-bit files only.
+- **SysWOW64 folder** is for 32-bit files only.
 
 ## Installation
 

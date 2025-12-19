@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {  Delphi OPENSSL Library                                                      }
-{  Copyright (c) 2018 Luca Minuti                                              }
+{  Copyright (c) Luca Minuti                                                   }
 {  https://bitbucket.org/lminuti/delphi-openssl                                }
 {                                                                              }
 {******************************************************************************}
