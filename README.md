@@ -11,6 +11,7 @@ A [Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](htt
 - Generation of pseudo-random bit strings
 - Basic SMIME support
 - Generate RSA KeyPairs in PKCS PEM format
+- Generate self-signed X.509 certificates and Certificate Signing Requests (CSR)
 
 ## Usage
 
@@ -111,6 +112,54 @@ begin
     EncUtil.Encrypt('text.plain', 'text.aes256');
   finally
     EncUtil.Free;
+  end;
+end;
+```
+
+### Generate a self-signed certificate
+
+*Command line:*
+
+    OpenSSL req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
+
+
+*Source code:*
+
+```delphi
+var
+  ReqUtil: TReqUtil;
+begin
+  ReqUtil := TReqUtil.Create;
+  try
+    ReqUtil.GenerateSelfSignedCertificate('CN=localhost,O=MyCompany,C=IT', 365, 2048);
+    ReqUtil.SaveCertificateToFile('cert.pem');
+    ReqUtil.SavePrivateKeyToFile('key.pem');
+  finally
+    ReqUtil.Free;
+  end;
+end;
+```
+
+### Generate a Certificate Signing Request (CSR)
+
+*Command line:*
+
+    OpenSSL req -new -newkey rsa:2048 -keyout key.pem -out request.csr -nodes
+
+
+*Source code:*
+
+```delphi
+var
+  ReqUtil: TReqUtil;
+begin
+  ReqUtil := TReqUtil.Create;
+  try
+    ReqUtil.GenerateCSR('CN=example.com,O=MyCompany,C=IT', 2048);
+    ReqUtil.SaveCSRToFile('request.csr');
+    ReqUtil.SavePrivateKeyToFile('key.pem');
+  finally
+    ReqUtil.Free;
   end;
 end;
 ```

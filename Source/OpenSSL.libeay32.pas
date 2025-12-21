@@ -88,6 +88,8 @@ var
   RAND_load_file: function (filename: PAnsiChar; max_bytes: Integer): Integer cdecl;
   RAND_write_file: function (filename: PAnsiChar): Integer cdecl;
 
+  X509_REQ_set_version: function(x: pX509_REQ; version: Integer): Integer cdecl;
+
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
@@ -169,6 +171,7 @@ begin
   RAND_file_name := nil;
   RAND_load_file := nil;
   RAND_write_file := nil;
+  X509_REQ_set_version := nil;
 end;
 
 function LoadOpenSSLLibraryEx :Boolean;
@@ -206,6 +209,7 @@ begin
     RAND_file_name := GetProcAddress(hSSL, 'RAND_file_name');
     RAND_load_file := GetProcAddress(hSSL, 'RAND_load_file');
     RAND_write_file := GetProcAddress(hSSL, 'RAND_write_file');
+    X509_REQ_set_version := GetProcAddress(hSSL, 'X509_REQ_set_version');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;

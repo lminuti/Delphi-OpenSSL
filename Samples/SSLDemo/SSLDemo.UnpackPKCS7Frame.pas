@@ -57,6 +57,12 @@ var
   Verify: Integer;
   InputStream, OutputStream: TMemoryStream;
 begin
+  if not FileExists(edtInputFileName.Text) then
+  begin
+    ShowMessage(Format('File "%s" not found. You can create a test file using "create_p7m.bat"', [edtInputFileName.Text]));
+    Exit;
+  end;
+
   SMIME := TSMIMEUtil.Create;
   InputStream := TMemoryStream.Create;
   OutputStream := TMemoryStream.Create;

@@ -134,12 +134,17 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="OpenSSL.Tests.Core.pas"/>
+        <DCCReference Include="OpenSSL.Tests.RandUtils.pas"/>
+        <DCCReference Include="OpenSSL.Tests.RSAUtils.pas"/>
+        <DCCReference Include="OpenSSL.Tests.EncUtils.pas"/>
+        <DCCReference Include="OpenSSL.Tests.SMIMEUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.Core.pas"/>
         <DCCReference Include="..\Source\OpenSSL.EncUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.libeay32.pas"/>
         <DCCReference Include="..\Source\OpenSSL.RandUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.RSAUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.SMIMEUtils.pas"/>
+        <DCCReference Include="..\Source\OpenSSL.ReqUtils.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

@@ -53,16 +53,17 @@ type
     procedure LoadFromCertificate(Cerificate :TX509Cerificate);
     procedure SaveToFile(const FileName :string; AFormat: TPublicKeyFormat = kfDefault); virtual;
     procedure SaveToStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); virtual;
+    property RSA: PRSA read GetRSA;
   end;
 
   TRSAPublicKey = class(TCustomRSAPublicKey)
-  private
-    FRSA :PRSA;
   protected
+    FRSA :PRSA;
     procedure FreeRSA; override;
     function GetRSA :PRSA; override;
   public
     constructor Create; override;
+    constructor CreateFromRSA(ARSA: PRSA);
     procedure LoadFromStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); override;
   end;
 
@@ -84,16 +85,17 @@ type
     procedure SaveToFile(const FileName :string; AFormat: TPrivateKeyFormat = kpDefault); virtual;
     procedure SaveToStream(AStream :TStream; AFormat: TPrivateKeyFormat = kpDefault); virtual;
     property OnNeedPassphrase :TPassphraseEvent read FOnNeedPassphrase write FOnNeedPassphrase;
+    property RSA: PRSA read GetRSA;
   end;
 
   TRSAPrivateKey = class(TCustomRSAPrivateKey)
-  private
-    FRSA :PRSA;
   protected
+    FRSA :PRSA;
     procedure FreeRSA; override;
     function GetRSA :PRSA; override;
   public
     constructor Create; override;
+    constructor CreateFromRSA(ARSA: PRSA);
     procedure LoadFromStream(AStream :TStream; AFormat: TPrivateKeyFormat = kpDefault); override;
   end;
 
@@ -689,6 +691,12 @@ begin
   FRSA := nil;
 end;
 
+constructor TRSAPrivateKey.CreateFromRSA(ARSA: PRSA);
+begin
+  inherited Create;
+  FRSA := ARSA;
+end;
+
 procedure TRSAPrivateKey.FreeRSA;
 begin
   if FRSA <> nil then
@@ -773,6 +781,12 @@ constructor TRSAPublicKey.Create;
 begin
   inherited;
   FRSA := nil;
+end;
+
+constructor TRSAPublicKey.CreateFromRSA(ARSA: PRSA);
+begin
+  inherited Create;
+  FRSA := ARSA;
 end;
 
 procedure TRSAPublicKey.FreeRSA;

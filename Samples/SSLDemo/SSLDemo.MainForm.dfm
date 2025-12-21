@@ -2,24 +2,25 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'SSLDemo'
-  ClientHeight = 544
-  ClientWidth = 613
+  ClientHeight = 635
+  ClientWidth = 847
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'Tahoma'
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
   Font.Style = []
-  OldCreateOrder = False
+  Position = poScreenCenter
   OnCreate = FormCreate
-  PixelsPerInch = 96
-  TextHeight = 13
+  TextHeight = 17
   object pgcMain: TPageControl
     Left = 0
     Top = 0
-    Width = 613
-    Height = 544
+    Width = 847
+    Height = 635
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 613
+    ExplicitHeight = 544
   end
 end

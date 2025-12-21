@@ -48,18 +48,20 @@ type
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
-    Label9: TLabel;
     Label10: TLabel;
     edtP7MTestFile: TEdit;
-    Label11: TLabel;
-    BtnGenerateKeyPairs: TButton;
-    Label12: TLabel;
-    Label13: TLabel;
+    BtnGenerateCertificate: TButton;
+    BtnPrintCertificate: TButton;
+    BtnPrintPrivateKey: TButton;
+    BtnPrintPublicKey: TButton;
     procedure btnCryptWithKeyClick(Sender: TObject);
     procedure btnDecryptWithKeyClick(Sender: TObject);
     procedure btnCryptWithCertClick(Sender: TObject);
     procedure btnGenerateSampleFileClick(Sender: TObject);
-    procedure BtnGenerateKeyPairsClick(Sender: TObject);
+    procedure BtnGenerateCertificateClick(Sender: TObject);
+    procedure BtnPrintCertificateClick(Sender: TObject);
+    procedure BtnPrintPrivateKeyClick(Sender: TObject);
+    procedure BtnPrintPublicKeyClick(Sender: TObject);
   private
     procedure PassphraseReader(Sender :TObject; var Passphrase :string);
   public
@@ -71,7 +73,8 @@ implementation
 {$R *.dfm}
 
 uses
-  OpenSSL.RSAUtils, System.IOUtils;
+  OpenSSL.RSAUtils,
+  OpenSSL.ReqUtils;
 
 { TMainForm }
 
@@ -86,6 +89,7 @@ begin
   finally
     RSAUtil.Free;
   end;
+  ShowMessage('Success!')
 end;
 
 procedure TMainFrame.btnDecryptWithKeyClick(Sender: TObject);
@@ -100,6 +104,7 @@ begin
   finally
     RSAUtil.Free;
   end;
+  ShowMessage('Success!')
 end;
 
 procedure TMainFrame.btnCryptWithCertClick(Sender: TObject);
@@ -120,6 +125,7 @@ begin
   finally
     RSAUtil.Free;
   end;
+  ShowMessage('Success!')
 end;
 
 procedure TMainFrame.btnGenerateSampleFileClick(Sender: TObject);
@@ -133,6 +139,63 @@ begin
   finally
     SL.Free;
   end;
+  ShowMessage('File generated!')
+end;
+
+procedure TMainFrame.BtnPrintCertificateClick(Sender: TObject);
+var
+  Cerificate :TX509Cerificate;
+begin
+  Cerificate := TX509Cerificate.Create;
+  try
+    Cerificate.LoadFromFile(edtCertFile.Text);
+    ShowMessage(Cerificate.Print);
+  finally
+    Cerificate.Free;
+  end;
+end;
+
+procedure TMainFrame.BtnPrintPrivateKeyClick(Sender: TObject);
+var
+  PrivateKey :TRSAPrivateKey;
+begin
+  PrivateKey := TRSAPrivateKey.Create;
+  try
+    //PrivateKey.OnNeedPassphrase := PassphraseReader;
+    PrivateKey.LoadFromFile(edtPriv.Text);
+    ShowMessage(PrivateKey.Print);
+  finally
+    PrivateKey.Free;
+  end;
+end;
+
+procedure TMainFrame.BtnPrintPublicKeyClick(Sender: TObject);
+var
+  PublicKey :TRSAPublicKey;
+begin
+  PublicKey := TRSAPublicKey.Create;
+  try
+    PublicKey.LoadFromFile(edtPub.Text);
+    ShowMessage(PublicKey.Print);
+  finally
+    PublicKey.Free;
+  end;
+end;
+
+procedure TMainFrame.BtnGenerateCertificateClick(Sender: TObject);
+var
+  ReqUtils: TReqUtil;
+begin
+  ReqUtils := TReqUtil.Create;
+  try
+    ReqUtils.GenerateSelfSignedCertificate('/C=IT/ST=Lombardia/L=Milan/O=MyOrg/CN=localhost');
+    ReqUtils.SavePrivateKeyToFile(edtPriv.Text);
+    ReqUtils.SavePublicKeyToFile(edtPub.Text);
+    ReqUtils.SaveCertificateToFile(edtCertFile.Text);
+  finally
+    ReqUtils.Free;
+  end;
+  ShowMessage('Private key, public key and self-signed ceritificate created');
 end;
 
 constructor TMainFrame.Create(AOwner: TComponent);
@@ -152,20 +215,6 @@ end;
 procedure TMainFrame.PassphraseReader(Sender: TObject; var Passphrase: string);
 begin
   Passphrase := InputBox(Name, 'Passphrase', '');
-end;
-
-procedure TMainFrame.BtnGenerateKeyPairsClick(Sender: TObject);
-var
-  KeyPair: TRSAKeyPair;
-begin
-  KeyPair := TRSAKeyPair.Create;
-  try
-    KeyPair.GenerateKey;
-    KeyPair.PrivateKey.SaveToFile(edtPriv.Text);
-    KeyPair.PublicKey.SaveToFile(edtPub.Text);
-  finally
-    KeyPair.Free;
-  end;
 end;
 
 end.

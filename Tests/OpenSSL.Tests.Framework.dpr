@@ -43,12 +43,14 @@ uses
   OpenSSL.Tests.RSAUtils in 'OpenSSL.Tests.RSAUtils.pas',
   OpenSSL.Tests.EncUtils in 'OpenSSL.Tests.EncUtils.pas',
   OpenSSL.Tests.SMIMEUtils in 'OpenSSL.Tests.SMIMEUtils.pas',
+  OpenSSL.Tests.ReqUtils in 'OpenSSL.Tests.ReqUtils.pas',
   OpenSSL.Core in '..\Source\OpenSSL.Core.pas',
   OpenSSL.EncUtils in '..\Source\OpenSSL.EncUtils.pas',
   OpenSSL.libeay32 in '..\Source\OpenSSL.libeay32.pas',
   OpenSSL.RandUtils in '..\Source\OpenSSL.RandUtils.pas',
   OpenSSL.RSAUtils in '..\Source\OpenSSL.RSAUtils.pas',
-  OpenSSL.SMIMEUtils in '..\Source\OpenSSL.SMIMEUtils.pas';
+  OpenSSL.SMIMEUtils in '..\Source\OpenSSL.SMIMEUtils.pas',
+  OpenSSL.ReqUtils in '..\Source\OpenSSL.ReqUtils.pas';
 
 var
   runner : ITestRunner;

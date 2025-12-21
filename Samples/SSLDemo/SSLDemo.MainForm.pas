@@ -46,8 +46,11 @@ implementation
 {$R *.dfm}
 
 uses
-  SSLDemo.MainFrame, SSLDemo.RSABufferFrame, SSLDemo.EncFrame, SSLDemo.UnpackPKCS7Frame,
-  SSLDemo.RandFrame, SSLDemo.KeyPairFrame;
+  SSLDemo.MainFrame,
+  SSLDemo.EncFrame,
+  SSLDemo.UnpackPKCS7Frame,
+  SSLDemo.RandFrame,
+  SSLDemo.KeyPairFrame;
 
 { TMainForm }
 
@@ -62,13 +65,13 @@ begin
   TabSheet.PageControl := pgcMain;
 
   AFrame := FrameClass.Create(Application);
+  AFrame.Align := alClient;
   AFrame.Parent := TabSheet;
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   AddFrame('Tutorial', TMainFrame);
-  AddFrame('RSABuffer', TRSABufferFrame);
   AddFrame('Encryption', TEncFrame);
   AddFrame('Random', TRandomFrame);
   AddFrame('Unpack PKCS7', TUnpackPKCS7Frame);
