@@ -35,18 +35,6 @@ type
     [Setup]
     procedure Setup;
 
-    // Subject parsing tests
-    [Test]
-    procedure TestSubjectInfoParseSimple;
-    [Test]
-    procedure TestSubjectInfoParseWithSpaces;
-    [Test]
-    procedure TestSubjectInfoParseWithQuotes;
-    [Test]
-    procedure TestSubjectInfoToString;
-    [Test]
-    procedure TestSubjectInfoRoundTrip;
-
     // Certificate generation tests
     [Test]
     procedure TestGenerateSelfSignedCertificate;
@@ -79,70 +67,6 @@ procedure TOpenSSLReqUtilsTest.Setup;
 begin
   if not LoadOpenSSLLibraryEx then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
-end;
-
-procedure TOpenSSLReqUtilsTest.TestSubjectInfoParseSimple;
-var
-  Subject: TSubjectInfo;
-begin
-  Subject := 'CN=localhost,O=MyCompany,C=IT';
-  Assert.AreEqual('localhost', Subject.CommonName, 'CommonName mismatch');
-  Assert.AreEqual('MyCompany', Subject.Organization, 'Organization mismatch');
-  Assert.AreEqual('IT', Subject.Country, 'Country mismatch');
-end;
-
-procedure TOpenSSLReqUtilsTest.TestSubjectInfoParseWithSpaces;
-var
-  Subject: TSubjectInfo;
-begin
-  Subject := 'CN=localhost, O=My Company, C=IT';
-  Assert.AreEqual('localhost', Subject.CommonName, 'CommonName mismatch');
-  Assert.AreEqual('My Company', Subject.Organization, 'Organization mismatch');
-  Assert.AreEqual('IT', Subject.Country, 'Country mismatch');
-end;
-
-procedure TOpenSSLReqUtilsTest.TestSubjectInfoParseWithQuotes;
-var
-  Subject: TSubjectInfo;
-begin
-  Subject := 'CN="localhost, server",O=MyCompany,C=IT';
-  Assert.AreEqual('localhost, server', Subject.CommonName, 'Quoted CommonName mismatch');
-  Assert.AreEqual('MyCompany', Subject.Organization, 'Organization mismatch');
-  Assert.AreEqual('IT', Subject.Country, 'Country mismatch');
-end;
-
-procedure TOpenSSLReqUtilsTest.TestSubjectInfoToString;
-var
-  Subject: TSubjectInfo;
-  Result: string;
-begin
-  Subject.CommonName := 'localhost';
-  Subject.Organization := 'MyCompany';
-  Subject.Country := 'IT';
-
-  Result := Subject;
-  Assert.IsTrue(Result.Contains('CN=localhost'), 'Missing CN in output');
-  Assert.IsTrue(Result.Contains('O=MyCompany'), 'Missing O in output');
-  Assert.IsTrue(Result.Contains('C=IT'), 'Missing C in output');
-end;
-
-procedure TOpenSSLReqUtilsTest.TestSubjectInfoRoundTrip;
-var
-  Original, Parsed: TSubjectInfo;
-  Str: string;
-begin
-  Original.CommonName := 'localhost';
-  Original.Organization := 'My Company';
-  Original.Country := 'IT';
-  Original.State := 'California';
-
-  Str := Original;
-  Parsed := Str;
-
-  Assert.AreEqual(Original.CommonName, Parsed.CommonName, 'CommonName roundtrip failed');
-  Assert.AreEqual(Original.Organization, Parsed.Organization, 'Organization roundtrip failed');
-  Assert.AreEqual(Original.Country, Parsed.Country, 'Country roundtrip failed');
-  Assert.AreEqual(Original.State, Parsed.State, 'State roundtrip failed');
 end;
 
 procedure TOpenSSLReqUtilsTest.TestGenerateSelfSignedCertificate;

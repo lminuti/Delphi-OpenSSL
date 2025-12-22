@@ -57,6 +57,22 @@ type
     procedure TestSaveLoadPublicKey;
     [Test]
     procedure TestSaveLoadPrivateKey;
+    [Test]
+    procedure TestCertificateSubject;
+    [Test]
+    procedure TestCertificateIssuer;
+    [Test]
+    procedure TestCertificateSerialNumber;
+    [Test]
+    procedure TestCertificateDates;
+    [Test]
+    procedure TestCertificateVersion;
+    [Test]
+    procedure TestCertificateIsValid;
+    [Test]
+    procedure TestCertificateDaysUntilExpiration;
+    [Test]
+    procedure TestPrintCertificateInfo;
   end;
 
 implementation
@@ -355,6 +371,231 @@ begin
     end;
   finally
     PrivateKey1.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateSubject;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  Subject: TSubjectInfo;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+      Subject := Certificate.Subject;
+
+      // TODO: Replace with actual values from the certificate
+      Assert.AreEqual('localhost', Subject.CommonName, 'CommonName mismatch');
+      Assert.AreEqual('La Mia Azienda', Subject.Organization, 'Organization mismatch');
+      Assert.AreEqual('IT Department', Subject.OrganizationalUnit, 'OrganizationalUnit mismatch');
+      Assert.AreEqual('IT', Subject.Country, 'Country mismatch');
+      Assert.AreEqual('Lombardia', Subject.State, 'State mismatch');
+      Assert.AreEqual('Milano', Subject.Locality, 'Locality mismatch');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateIssuer;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  Issuer: TSubjectInfo;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+      Issuer := Certificate.Issuer;
+
+      // For self-signed certificate, issuer should equal subject
+      // TODO: Replace with actual values from the certificate
+      Assert.AreEqual('localhost', Issuer.CommonName, 'Issuer CommonName mismatch');
+      Assert.AreEqual('La Mia Azienda', Issuer.Organization, 'Issuer Organization mismatch');
+      Assert.AreEqual('IT Department', Issuer.OrganizationalUnit, 'Issuer OrganizationalUnit mismatch');
+      Assert.AreEqual('IT', Issuer.Country, 'Issuer Country mismatch');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateSerialNumber;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  SerialNumber: TSerialNumber;
+  SerialHex: string;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+      SerialNumber := Certificate.SerialNumber;
+
+      Assert.IsFalse(SerialNumber.IsEmpty, 'Serial number is empty');
+
+      // Get hex representation
+      SerialHex := SerialNumber.ToHexString(':');
+      Assert.IsTrue(Length(SerialHex) > 0, 'Serial number hex string is empty');
+
+      // Verify it's a valid hex string (should contain digits and A-F)
+      Assert.IsTrue(Pos(':', SerialHex) > 0, 'Serial number should contain separator');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateDates;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  NotBefore, NotAfter: TDateTime;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+
+      NotBefore := Certificate.NotBefore;
+      NotAfter := Certificate.NotAfter;
+
+      Assert.IsTrue(NotBefore > 0, 'NotBefore date is invalid');
+      Assert.IsTrue(NotAfter > 0, 'NotAfter date is invalid');
+      Assert.IsTrue(NotAfter > NotBefore, 'NotAfter should be after NotBefore');
+
+      // Certificate should be valid for at least 1 day
+      Assert.IsTrue(NotAfter - NotBefore >= 1, 'Certificate validity period is too short');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateVersion;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  Version: Integer;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+      Version := Certificate.Version;
+
+      // Most certificates are v3 (value 3)
+      Assert.IsTrue(Version >= 1, 'Version should be at least 1');
+      Assert.IsTrue(Version <= 3, 'Version should not exceed 3');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateIsValid;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  FutureDate, PastDate: TDateTime;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+
+      // Test current validity
+      Assert.IsTrue(Certificate.IsValidNow, 'Certificate should be valid now');
+      Assert.IsFalse(Certificate.IsExpired, 'Certificate should not be expired');
+
+      // Test validity at specific dates
+      PastDate := EncodeDate(2020, 1, 1);
+      Assert.IsFalse(Certificate.IsValidAt(PastDate), 'Certificate should not be valid in 2020');
+
+      FutureDate := EncodeDate(2040, 1, 1);
+      Assert.IsFalse(Certificate.IsValidAt(FutureDate), 'Certificate should not be valid in 2040');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestCertificateDaysUntilExpiration;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  Days: Integer;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+      Days := Certificate.DaysUntilExpiration;
+
+      // Certificate should have positive days remaining (not expired)
+      Assert.IsTrue(Days > 0, 'Certificate should have days remaining until expiration');
+
+      // Should have a reasonable number of days (less than 20 years)
+      Assert.IsTrue(Days < 365 * 20, 'Days until expiration seems unreasonably high');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestPrintCertificateInfo;
+var
+  Certificate: TX509Cerificate;
+  Stream: TStringStream;
+  Info: string;
+begin
+  Certificate := TX509Cerificate.Create;
+  try
+    Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
+    try
+      Certificate.LoadFromStream(Stream);
+      Info := Certificate.PrintCertificateInfo;
+
+      Assert.IsTrue(Length(Info) > 0, 'Certificate info should not be empty');
+
+      // Verify it contains expected sections
+      Assert.IsTrue(Pos('Subject:', Info) > 0, 'Info should contain Subject');
+      Assert.IsTrue(Pos('Issuer:', Info) > 0, 'Info should contain Issuer');
+      Assert.IsTrue(Pos('Serial Number:', Info) > 0, 'Info should contain Serial Number');
+      Assert.IsTrue(Pos('Version:', Info) > 0, 'Info should contain Version');
+      Assert.IsTrue(Pos('Validity:', Info) > 0, 'Info should contain Validity section');
+      Assert.IsTrue(Pos('Not Before:', Info) > 0, 'Info should contain Not Before date');
+      Assert.IsTrue(Pos('Not After:', Info) > 0, 'Info should contain Not After date');
+    finally
+      Stream.Free;
+    end;
+  finally
+    Certificate.Free;
   end;
 end;
 

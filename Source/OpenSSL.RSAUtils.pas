@@ -24,8 +24,12 @@ unit OpenSSL.RSAUtils;
 interface
 
 uses
-  System.Classes, System.SysUtils, System.AnsiStrings, OpenSSL.libeay32,
-  OpenSSL.Core, IdSSLOpenSSLHeaders;
+  System.Classes, System.SysUtils, System.StrUtils, System.DateUtils,
+  System.AnsiStrings,
+
+  OpenSSL.libeay32, OpenSSL.Core,
+
+  IdSSLOpenSSLHeaders;
 
 type
   TX509Cerificate = class;
@@ -108,14 +112,33 @@ type
     procedure FreeRSA;
     procedure FreeX509;
     function GetPublicRSA :PRSA;
+    function GetSubject: TSubjectInfo;
+    function GetIssuer: TSubjectInfo;
+    function GetSerialNumber: TSerialNumber;
+    function GetNotBefore: TDateTime;
+    function GetNotAfter: TDateTime;
+    function GetVersion: Integer;
   public
     constructor Create; override;
     destructor Destroy; override;
 
     function IsValid :Boolean;
     function Print: string;
+    function PrintCertificateInfo: string;
     procedure LoadFromFile(const FileName :string);
     procedure LoadFromStream(AStream :TStream);
+
+    function IsExpired: Boolean;
+    function IsValidNow: Boolean;
+    function IsValidAt(ADateTime: TDateTime): Boolean;
+    function DaysUntilExpiration: Integer;
+
+    property Subject: TSubjectInfo read GetSubject;
+    property Issuer: TSubjectInfo read GetIssuer;
+    property SerialNumber: TSerialNumber read GetSerialNumber;
+    property NotBefore: TDateTime read GetNotBefore;
+    property NotAfter: TDateTime read GetNotAfter;
+    property Version: Integer read GetVersion;
   end;
 
   TRSAKeyPair = class(TOpenSLLBase)
@@ -414,6 +437,244 @@ begin
       RaiseOpenSSLError('X509 load certificate error');
   finally
     BIO_free(KeyFile);
+  end;
+end;
+
+function X509NameToSubjectInfo(Name: pX509_NAME): TSubjectInfo;
+
+  function GetNameEntry(NID: Integer): string;
+  const
+    BuffSize = 2048;
+  var
+    LBuffer: array [0..BuffSize] of AnsiChar;
+  begin
+    if Name = nil then
+    begin
+      Result := ''; { Do not Localize }
+    end
+    else
+    begin
+      if X509_NAME_get_text_by_NID(Name, Nid, @LBuffer[0], BuffSize - 1) > -1 then
+      begin
+        // PIdAnsiChar typecast is necessary to force the RTL
+        // to read it as a PAnsiChar for conversion for a
+        // string.
+        Result := String(PAnsiChar(@LBuffer[0]));
+      end
+      else
+      begin
+        Result := '';
+      end;
+    end;
+  end;
+
+begin
+  // Extract each component of the Distinguished Name
+  Result.CommonName := GetNameEntry(NID_commonName);
+  Result.Organization := GetNameEntry(NID_organizationName);
+  Result.OrganizationalUnit := GetNameEntry(NID_organizationalUnitName);
+  Result.Country := GetNameEntry(NID_countryName);
+  Result.State := GetNameEntry(NID_stateOrProvinceName);
+  Result.Locality := GetNameEntry(NID_localityName);
+
+  // Try email address (NID 48)
+  Result.EmailAddress := GetNameEntry(48); // NID_pkcs9_emailAddress
+end;
+
+function ASN1TimeToDateTime(ASN1Time: PASN1_TIME): TDateTime;
+var
+  Bio: pBIO;
+  Buffer: array[0..255] of AnsiChar;
+  Len: Integer;
+  TimeStr: string;
+  Parts: TArray<string>;
+  MonthStr: string;
+  Year, Month, Day, Hour, Minute, Second: Word;
+begin
+  Result := 0;
+  if ASN1Time = nil then
+    Exit;
+
+  Bio := BIO_new(BIO_s_mem());
+  try
+    ASN1_TIME_print(Bio, ASN1Time);
+    Len := BIO_read(Bio, @Buffer[0], SizeOf(Buffer) - 1);
+    if Len > 0 then
+    begin
+      Buffer[Len] := #0;
+      TimeStr := string(AnsiString(PAnsiChar(@Buffer[0])));
+
+      // Parse format: "MMM DD HH:MM:SS YYYY GMT"
+      // Example: "Jan 15 10:30:45 2024 GMT"
+      try
+        // Extract date components (simplified parsing)
+        // Format: "Jan 15 10:30:45 2024 GMT"
+        Parts := TimeStr.Split([' ', ':']);
+        if Length(Parts) >= 6 then
+        begin
+          // Month name to number
+          MonthStr := Parts[0];
+          Month := 1;
+          if MonthStr = 'Jan' then Month := 1
+          else if MonthStr = 'Feb' then Month := 2
+          else if MonthStr = 'Mar' then Month := 3
+          else if MonthStr = 'Apr' then Month := 4
+          else if MonthStr = 'May' then Month := 5
+          else if MonthStr = 'Jun' then Month := 6
+          else if MonthStr = 'Jul' then Month := 7
+          else if MonthStr = 'Aug' then Month := 8
+          else if MonthStr = 'Sep' then Month := 9
+          else if MonthStr = 'Oct' then Month := 10
+          else if MonthStr = 'Nov' then Month := 11
+          else if MonthStr = 'Dec' then Month := 12;
+
+          Day := StrToIntDef(Parts[1], 1);
+          Hour := StrToIntDef(Parts[2], 0);
+          Minute := StrToIntDef(Parts[3], 0);
+          Second := StrToIntDef(Parts[4], 0);
+          Year := StrToIntDef(Parts[5], 2000);
+
+          Result := EncodeDate(Year, Month, Day) + EncodeTime(Hour, Minute, Second, 0);
+        end;
+      except
+        Result := 0;
+      end;
+    end;
+  finally
+    BIO_free(Bio);
+  end;
+end;
+
+function TX509Cerificate.GetSubject: TSubjectInfo;
+var
+  Name: pX509_NAME;
+begin
+  if not IsValid then
+    raise EOpenSSLError.Create('Certificate not loaded');
+
+  Name := X509_get_subject_name(FX509);
+  if Name = nil then
+    RaiseOpenSSLError('Failed to get subject name');
+
+  Result := X509NameToSubjectInfo(Name);
+end;
+
+function TX509Cerificate.GetIssuer: TSubjectInfo;
+var
+  Name: pX509_NAME;
+begin
+  if not IsValid then
+    raise EOpenSSLError.Create('Certificate not loaded');
+
+  Name := X509_get_issuer_name(FX509);
+  if Name = nil then
+    RaiseOpenSSLError('Failed to get issuer name');
+
+  Result := X509NameToSubjectInfo(Name);
+end;
+
+function TX509Cerificate.GetSerialNumber: TSerialNumber;
+var
+  ASN1Serial: PASN1_INTEGER;
+  bn: PBIGNUM;
+  ByteCount: Integer;
+  Bytes: TBytes;
+begin
+  if not IsValid then
+    raise EOpenSSLError.Create('Certificate not loaded');
+
+  ASN1Serial := X509_get_serialNumber(FX509);
+  if ASN1Serial = nil then
+    RaiseOpenSSLError('Failed to get serial number');
+
+  bn := ASN1_INTEGER_to_BN(ASN1Serial, nil);
+  if bn = nil then
+    RaiseOpenSSLError('Failed to convert serial number to BIGNUM');
+  try
+    ByteCount := BN_num_bytes(bn);
+    SetLength(Bytes, ByteCount);
+    if ByteCount > 0 then
+      BN_bn2bin(bn, @Bytes[0]);
+    Result := Bytes;
+  finally
+    BN_free(bn);
+  end;
+end;
+
+function TX509Cerificate.GetNotBefore: TDateTime;
+var
+  ASN1Time: PASN1_TIME;
+begin
+  if not IsValid then
+    raise EOpenSSLError.Create('Certificate not loaded');
+
+  ASN1Time := X509_get_notBefore(FX509);
+  Result := ASN1TimeToDateTime(ASN1Time);
+end;
+
+function TX509Cerificate.GetNotAfter: TDateTime;
+var
+  ASN1Time: PASN1_TIME;
+begin
+  if not IsValid then
+    raise EOpenSSLError.Create('Certificate not loaded');
+
+  ASN1Time := X509_get_notAfter(FX509);
+  Result := ASN1TimeToDateTime(ASN1Time);
+end;
+
+function TX509Cerificate.GetVersion: Integer;
+begin
+  if not IsValid then
+    raise EOpenSSLError.Create('Certificate not loaded');
+
+  // X509_get_version returns 0 for v1, 1 for v2, 2 for v3
+  // We return the actual version number (1, 2, 3)
+  Result := X509_get_version(FX509) + 1;
+end;
+
+function TX509Cerificate.IsExpired: Boolean;
+begin
+  Result := Now > NotAfter;
+end;
+
+function TX509Cerificate.IsValidNow: Boolean;
+begin
+  Result := IsValidAt(Now);
+end;
+
+function TX509Cerificate.IsValidAt(ADateTime: TDateTime): Boolean;
+begin
+  Result := (ADateTime >= NotBefore) and (ADateTime <= NotAfter);
+end;
+
+function TX509Cerificate.DaysUntilExpiration: Integer;
+begin
+  Result := Trunc(NotAfter - Now);
+end;
+
+function TX509Cerificate.PrintCertificateInfo: string;
+var
+  SB: TStringBuilder;
+begin
+  SB := TStringBuilder.Create;
+  try
+    SB.AppendLine('Subject: ' + string(Subject));
+    SB.AppendLine('Issuer: ' + string(Issuer));
+    SB.AppendLine('Serial Number: ' + string(SerialNumber));
+    SB.AppendLine('Version: ' + IntToStr(Version));
+    SB.AppendLine('');
+    SB.AppendLine('Validity:');
+    SB.AppendLine('  Not Before: ' + DateTimeToStr(NotBefore));
+    SB.AppendLine('  Not After: ' + DateTimeToStr(NotAfter));
+    SB.AppendLine('  Status: ' + IfThen(IsExpired, 'EXPIRED',
+      IfThen(IsValidNow, 'VALID', 'NOT YET VALID')));
+    if not IsExpired then
+      SB.AppendLine('  Days Until Expiration: ' + IntToStr(DaysUntilExpiration));
+
+    Result := SB.ToString;
+  finally
+    SB.Free;
   end;
 end;
 

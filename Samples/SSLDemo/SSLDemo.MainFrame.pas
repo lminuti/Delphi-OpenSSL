@@ -149,7 +149,7 @@ begin
   Cerificate := TX509Cerificate.Create;
   try
     Cerificate.LoadFromFile(edtCertFile.Text);
-    ShowMessage(Cerificate.Print);
+    ShowMessage(Cerificate.PrintCertificateInfo);
   finally
     Cerificate.Free;
   end;

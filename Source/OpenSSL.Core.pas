@@ -24,7 +24,7 @@ unit OpenSSL.Core;
 interface
 
 uses
-  System.Classes, System.SysUtils, IdSSLOpenSSLHeaders, OpenSSL.libeay32;
+  System.Classes, System.SysUtils, System.StrUtils, IdSSLOpenSSLHeaders, OpenSSL.libeay32;
 
 type
   TRASPadding = (
@@ -33,6 +33,50 @@ type
     rpSSL,            // use SSL v2 padding
     rpRAW             // use no padding
     );
+
+  // X.509 Subject/Issuer information
+  // String format (OpenSSL command line style): /C=IT/ST=Lombardia/L=Milan/O=MyOrg/CN=localhost
+  // Implicit conversions support bidirectional parsing and formatting
+  TSubjectInfo = record
+  private
+    FCommonName: string;
+    FOrganization: string;
+    FOrganizationalUnit: string;
+    FCountry: string;
+    FState: string;
+    FLocality: string;
+    FEmailAddress: string;
+  public
+    class operator Implicit(const Value: string): TSubjectInfo;
+    class operator Implicit(const Value: TSubjectInfo): string;
+
+    property CommonName: string read FCommonName write FCommonName;
+    property Organization: string read FOrganization write FOrganization;
+    property OrganizationalUnit: string read FOrganizationalUnit write FOrganizationalUnit;
+    property Country: string read FCountry write FCountry;
+    property State: string read FState write FState;
+    property Locality: string read FLocality write FLocality;
+    property EmailAddress: string read FEmailAddress write FEmailAddress;
+  end;
+
+  // X.509 Serial Number
+  TSerialNumber = record
+  private
+    FData: TBytes;
+  public
+    class operator Implicit(const Value: TSerialNumber): string;
+    class operator Implicit(const Value: string): TSerialNumber;
+    class operator Implicit(const Value: TSerialNumber): Int64;
+    class operator Implicit(const Value: Int64): TSerialNumber;
+    class operator Implicit(const Value: TBytes): TSerialNumber;
+
+    function ToHexString(Separator: Char = #0): string;
+    function ToInt64: Int64;
+    function TryToInt64(out Value: Int64): Boolean;
+    function IsEmpty: Boolean;
+
+    property Data: TBytes read FData;
+  end;
 
   EOpenSSLError = Exception;
 
@@ -175,6 +219,204 @@ constructor EOpenSSLLibError.Create(Code: Integer; const Msg: string);
 begin
   FErrorCode := Code;
   inherited Create(Msg);
+end;
+
+{ TSubjectInfo }
+
+class operator TSubjectInfo.Implicit(const Value: string): TSubjectInfo;
+var
+  StringList: TStringList;
+begin
+  StringList := TStringList.Create;
+  try
+    StringList.StrictDelimiter := True;
+    StringList.NameValueSeparator := '=';
+    StringList.Delimiter := '/';
+    StringList.DelimitedText := Value;
+
+    // Remove the first empty element
+    if (StringList.Count > 0) and (StringList[0] = '') then
+      StringList.Delete(0);
+
+    Result.FCommonName := StringList.Values['CN'];
+    Result.FOrganization := StringList.Values['O'];
+    Result.FOrganizationalUnit := StringList.Values['OU'];
+    Result.FCountry := StringList.Values['C'];
+    Result.FState := StringList.Values['ST'];
+    Result.FLocality := StringList.Values['L'];
+    Result.FEmailAddress := StringList.Values['EMAIL'];
+    if Result.FEmailAddress = '' then
+      Result.FEmailAddress := StringList.Values['EMAILADDRESS'];
+
+  finally
+    StringList.Free;
+  end;
+end;
+
+class operator TSubjectInfo.Implicit(const Value: TSubjectInfo): string;
+var
+  StringList: TStringList;
+begin
+  StringList := TStringList.Create;
+  try
+    StringList.StrictDelimiter := True;
+    StringList.NameValueSeparator := '=';
+    StringList.Delimiter := '/';
+
+    StringList.Values['CN'] := Value.FCommonName;
+    StringList.Values['O'] := Value.FOrganization;
+    StringList.Values['OU'] := Value.FOrganizationalUnit;
+    StringList.Values['C'] := Value.FCountry;
+    StringList.Values['ST'] := Value.FState;
+    StringList.Values['L'] := Value.FLocality;
+    StringList.Values['emailAddress'] := Value.FEmailAddress;
+
+    Result := StringList.DelimitedText;
+
+  finally
+    StringList.Free;
+  end;
+end;
+
+{ TSerialNumber }
+
+class operator TSerialNumber.Implicit(const Value: TSerialNumber): string;
+begin
+  Result := Value.ToHexString();
+end;
+
+class operator TSerialNumber.Implicit(const Value: string): TSerialNumber;
+var
+  CleanHex: string;
+  i: Integer;
+  ByteCount: Integer;
+  ByteVal: Byte;
+begin
+  // Remove all separators (: - space)
+  CleanHex := '';
+  for i := 1 to Length(Value) do
+  begin
+    if CharInSet(Value[i], ['0'..'9', 'A'..'F', 'a'..'f']) then
+      CleanHex := CleanHex + Value[i];
+  end;
+
+  // Convert hex string to bytes
+  if CleanHex = '' then
+  begin
+    SetLength(Result.FData, 0);
+    Exit;
+  end;
+
+  ByteCount := (Length(CleanHex) + 1) div 2;
+  SetLength(Result.FData, ByteCount);
+
+  for i := 0 to ByteCount - 1 do
+  begin
+    if i * 2 + 2 <= Length(CleanHex) then
+      ByteVal := StrToInt('$' + Copy(CleanHex, i * 2 + 1, 2))
+    else
+      ByteVal := StrToInt('$' + Copy(CleanHex, i * 2 + 1, 1));
+    Result.FData[i] := ByteVal;
+  end;
+end;
+
+class operator TSerialNumber.Implicit(const Value: TSerialNumber): Int64;
+begin
+  Result := Value.ToInt64;
+end;
+
+class operator TSerialNumber.Implicit(const Value: Int64): TSerialNumber;
+var
+  i: Integer;
+  TempValue: Int64;
+  ByteList: TArray<Byte>;
+begin
+  if Value = 0 then
+  begin
+    SetLength(Result.FData, 1);
+    Result.FData[0] := 0;
+    Exit;
+  end;
+
+  // Convert Int64 to bytes (big-endian)
+  SetLength(ByteList, 0);
+  TempValue := Value;
+
+  while TempValue > 0 do
+  begin
+    SetLength(ByteList, Length(ByteList) + 1);
+    ByteList[High(ByteList)] := Byte(TempValue and $FF);
+    TempValue := TempValue shr 8;
+  end;
+
+  // Reverse to big-endian
+  SetLength(Result.FData, Length(ByteList));
+  for i := 0 to High(ByteList) do
+    Result.FData[i] := ByteList[High(ByteList) - i];
+end;
+
+function TSerialNumber.ToHexString(Separator: Char): string;
+var
+  i: Integer;
+  HexParts: TArray<string>;
+begin
+  if Length(FData) = 0 then
+  begin
+    Result := '';
+    Exit;
+  end;
+
+  SetLength(HexParts, Length(FData));
+  for i := 0 to High(FData) do
+    HexParts[i] := IntToHex(FData[i], 2);
+
+  if Separator = #0 then
+    Result := string.Join('', HexParts)
+  else
+    Result := string.Join(Separator, HexParts);
+end;
+
+function TSerialNumber.ToInt64: Int64;
+begin
+  if not TryToInt64(Result) then
+    raise EConvertError.Create('Serial number too large to convert to Int64');
+end;
+
+function TSerialNumber.TryToInt64(out Value: Int64): Boolean;
+var
+  i: Integer;
+begin
+  Value := 0;
+  //Result := False;
+
+  // Empty serial number
+  if Length(FData) = 0 then
+    Exit(True);
+
+  // Check if it fits in Int64 (max 8 bytes, and MSB must not indicate negative)
+  if Length(FData) > 8 then
+    Exit(False);
+
+  if (Length(FData) = 8) and (FData[0] and $80 <> 0) then
+    Exit(False); // Would be negative
+
+  // Convert big-endian bytes to Int64
+  for i := 0 to High(FData) do
+  begin
+    Value := (Value shl 8) or FData[i];
+  end;
+
+  Result := True;
+end;
+
+function TSerialNumber.IsEmpty: Boolean;
+begin
+  Result := Length(FData) = 0;
+end;
+
+class operator TSerialNumber.Implicit(const Value: TBytes): TSerialNumber;
+begin
+  Result.FData := Value;
 end;
 
 end.

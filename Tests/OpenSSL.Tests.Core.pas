@@ -77,6 +77,32 @@ type
     procedure TestEVP_GetKeyIVWithBytesPassword;
     [Test]
     procedure TestEVP_GetKeyIVDifferentPasswords;
+
+    // TSubjectInfo tests
+    [Test]
+    procedure TestSubjectInfoImplicitFromString;
+    [Test]
+    procedure TestSubjectInfoImplicitToString;
+    [Test]
+    procedure TestSubjectInfoRoundTrip;
+    [Test]
+    procedure TestSubjectInfoEmpty;
+
+    // TSerialNumber tests
+    [Test]
+    procedure TestSerialNumberFromInt64;
+    [Test]
+    procedure TestSerialNumberToInt64;
+    [Test]
+    procedure TestSerialNumberFromString;
+    [Test]
+    procedure TestSerialNumberToHexString;
+    [Test]
+    procedure TestSerialNumberFromBytes;
+    [Test]
+    procedure TestSerialNumberIsEmpty;
+    [Test]
+    procedure TestSerialNumberTryToInt64;
   end;
 
 implementation
@@ -312,6 +338,177 @@ begin
   EVP_GetKeyIV('Password2', Cipher, Salt, Key2, IV2);
 
   Assert.AreNotEqual(TEncoding.ASCII.GetString(Key1), TEncoding.ASCII.GetString(Key2));
+end;
+
+{ TSubjectInfo tests }
+
+procedure TOpenSSLCoreTest.TestSubjectInfoImplicitFromString;
+var
+  Subject: TSubjectInfo;
+begin
+  Subject := '/CN=www.example.com/O=Example Inc/OU=IT/C=US/ST=California/L=San Francisco';
+
+  Assert.AreEqual('www.example.com', Subject.CommonName);
+  Assert.AreEqual('Example Inc', Subject.Organization);
+  Assert.AreEqual('IT', Subject.OrganizationalUnit);
+  Assert.AreEqual('US', Subject.Country);
+  Assert.AreEqual('California', Subject.State);
+  Assert.AreEqual('San Francisco', Subject.Locality);
+end;
+
+procedure TOpenSSLCoreTest.TestSubjectInfoImplicitToString;
+var
+  Subject: TSubjectInfo;
+  SubjectStr: string;
+begin
+  Subject.CommonName := 'www.example.com';
+  Subject.Organization := 'Example Inc';
+  Subject.OrganizationalUnit := 'IT';
+  Subject.Country := 'US';
+
+  SubjectStr := Subject;
+
+  Assert.IsTrue(Pos('CN=www.example.com', SubjectStr) > 0, 'Missing CommonName');
+  Assert.IsTrue(Pos('O=Example Inc', SubjectStr) > 0, 'Missing Organization');
+  Assert.IsTrue(Pos('OU=IT', SubjectStr) > 0, 'Missing OrganizationalUnit');
+  Assert.IsTrue(Pos('C=US', SubjectStr) > 0, 'Missing Country');
+end;
+
+procedure TOpenSSLCoreTest.TestSubjectInfoRoundTrip;
+var
+  Original: TSubjectInfo;
+  SubjectStr: string;
+  Parsed: TSubjectInfo;
+begin
+  Original.CommonName := 'test.local';
+  Original.Organization := 'Test Org';
+  Original.Country := 'IT';
+
+  SubjectStr := Original;
+  Parsed := SubjectStr;
+
+  Assert.AreEqual(Original.CommonName, Parsed.CommonName, 'CommonName mismatch');
+  Assert.AreEqual(Original.Organization, Parsed.Organization, 'Organization mismatch');
+  Assert.AreEqual(Original.Country, Parsed.Country, 'Country mismatch');
+end;
+
+procedure TOpenSSLCoreTest.TestSubjectInfoEmpty;
+var
+  Subject: TSubjectInfo;
+  SubjectStr: string;
+begin
+  SubjectStr := '';
+  Subject := SubjectStr;
+
+  Assert.AreEqual('', Subject.CommonName);
+  Assert.AreEqual('', Subject.Organization);
+  Assert.AreEqual('', Subject.Country);
+end;
+
+{ TSerialNumber tests }
+
+procedure TOpenSSLCoreTest.TestSerialNumberFromInt64;
+var
+  Serial: TSerialNumber;
+  Value: Int64;
+begin
+  Value := 12345;
+  Serial := Value;
+
+  Assert.IsFalse(Serial.IsEmpty, 'Serial number should not be empty');
+  Assert.IsTrue(Length(Serial.Data) > 0, 'Serial data should not be empty');
+end;
+
+procedure TOpenSSLCoreTest.TestSerialNumberToInt64;
+var
+  Serial: TSerialNumber;
+  Value, Result: Int64;
+begin
+  Value := 98765;
+  Serial := Value;
+  Result := Serial.ToInt64;
+
+  Assert.AreEqual(Value, Result, 'Int64 conversion failed');
+end;
+
+procedure TOpenSSLCoreTest.TestSerialNumberFromString;
+var
+  Serial: TSerialNumber;
+  HexStr: string;
+begin
+  HexStr := '01:23:45:67:89:AB';
+  Serial := HexStr;
+
+  Assert.IsFalse(Serial.IsEmpty, 'Serial should not be empty');
+  Assert.AreEqual(6, Length(Serial.Data), 'Should parse 6 bytes');
+end;
+
+procedure TOpenSSLCoreTest.TestSerialNumberToHexString;
+var
+  Serial: TSerialNumber;
+  Bytes: TBytes;
+  HexStr: string;
+begin
+  SetLength(Bytes, 3);
+  Bytes[0] := $01;
+  Bytes[1] := $23;
+  Bytes[2] := $AB;
+
+  Serial := Bytes;
+  HexStr := Serial.ToHexString(':');
+
+  Assert.AreEqual('01:23:AB', HexStr, 'Hex string format incorrect');
+end;
+
+procedure TOpenSSLCoreTest.TestSerialNumberFromBytes;
+var
+  Serial: TSerialNumber;
+  Bytes: TBytes;
+begin
+  SetLength(Bytes, 4);
+  Bytes[0] := $DE;
+  Bytes[1] := $AD;
+  Bytes[2] := $BE;
+  Bytes[3] := $EF;
+
+  Serial := Bytes;
+
+  Assert.IsFalse(Serial.IsEmpty);
+  Assert.AreEqual(4, Length(Serial.Data));
+  Assert.AreEqual(Byte($DE), Serial.Data[0]);
+  Assert.AreEqual(Byte($EF), Serial.Data[3]);
+end;
+
+procedure TOpenSSLCoreTest.TestSerialNumberIsEmpty;
+var
+  Serial: TSerialNumber;
+  EmptyBytes: TBytes;
+begin
+  SetLength(EmptyBytes, 0);
+  Serial := EmptyBytes;
+
+  Assert.IsTrue(Serial.IsEmpty, 'Serial should be empty');
+end;
+
+procedure TOpenSSLCoreTest.TestSerialNumberTryToInt64;
+var
+  Serial: TSerialNumber;
+  Value: Int64;
+  Success: Boolean;
+  LargeBytes: TBytes;
+begin
+  // Test valid conversion
+  Serial := Int64(123456);
+  Success := Serial.TryToInt64(Value);
+  Assert.IsTrue(Success, 'TryToInt64 should succeed for small value');
+  Assert.AreEqual(Int64(123456), Value);
+
+  // Test too large (more than 8 bytes)
+  SetLength(LargeBytes, 9);
+  FillChar(LargeBytes[0], 9, $FF);
+  Serial := LargeBytes;
+  Success := Serial.TryToInt64(Value);
+  Assert.IsFalse(Success, 'TryToInt64 should fail for 9-byte value');
 end;
 
 initialization

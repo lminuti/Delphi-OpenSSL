@@ -57,6 +57,223 @@ const
   SMIME_BINARY    = PKCS7_BINARY;
   SMIME_NOATTR    = PKCS7_NOATTR;
 
+  XN_FLAG_COMPAT         = 0;          // Traditional; use old X509_NAME_print
+  XN_FLAG_SEP_COMMA_PLUS = (1 shl 16); // RFC2253 ,+
+  XN_FLAG_SEP_CPLUS_SPC  = (2 shl 16); // ,+ spaced: more readable
+  XN_FLAG_SEP_SPLUS_SPC  = (3 shl 16); // ;+ spaced
+  XN_FLAG_SEP_MULTILINE  = (4 shl 16); // One line per field
+
+  XN_FLAG_DN_REV = (1 shl 20);  // Reverse DN order
+
+  // How the field name is shown
+  XN_FLAG_FN_MASK = ($3 shl 21);
+  XN_FLAG_FN_SN   = 0;           // Object short name
+  XN_FLAG_FN_LN   = (1 shl 21);  // Object long name
+  XN_FLAG_FN_OID  = (2 shl 21);  // Always use OIDs
+  XN_FLAG_FN_NONE = (3 shl 21);  // No field names
+
+  XN_FLAG_SPC_EQ  = (1 shl 23);  // Put spaces round '='
+
+  // This determines if we dump fields we don't recognise: RFC2253 requires this.
+  XN_FLAG_DUMP_UNKNOWN_FIELDS = (1 shl 24);
+
+  XN_FLAG_FN_ALIGN = (1 shl 25); // Align field names to 20 characters
+
+  XN_FLAG_RFC2253 = ASN1_STRFLGS_RFC2253 or XN_FLAG_SEP_COMMA_PLUS or XN_FLAG_DN_REV or XN_FLAG_FN_SN or XN_FLAG_DUMP_UNKNOWN_FIELDS;
+
+SN_commonName = 'CN';
+  LN_commonName = 'commonName';
+  NID_commonName = 13;
+
+  SN_surname = 'SN';
+  LN_surname = 'surname';
+  NID_surname = 100;
+
+  LN_serialNumber = 'serialNumber';
+  NID_serialNumber = 105;
+
+  SN_countryName = 'C';
+  LN_countryName = 'countryName';
+  NID_countryName = 14;
+
+  SN_localityName = 'L';
+  LN_localityName = 'localityName';
+  NID_localityName = 15;
+
+  SN_stateOrProvinceName = 'ST';
+  LN_stateOrProvinceName = 'stateOrProvinceName';
+  NID_stateOrProvinceName = 16;
+
+  SN_streetAddress = 'street';
+  LN_streetAddress = 'streetAddress';
+  NID_streetAddress = 660;
+
+  SN_organizationName = 'O';
+  LN_organizationName = 'organizationName';
+  NID_organizationName = 17;
+
+  SN_organizationalUnitName = 'OU';
+  LN_organizationalUnitName = 'organizationalUnitName';
+  NID_organizationalUnitName = 18;
+
+  SN_title = 'title';
+  LN_title = 'title';
+  NID_title = 106;
+
+  LN_description = 'description';
+  NID_description = 107;
+
+  LN_searchGuide = 'searchGuide';
+  NID_searchGuide = 859;
+  LN_businessCategory = 'businessCategory';
+  NID_businessCategory = 860;
+
+  LN_postalAddress = 'postalAddress';
+  NID_postalAddress = 861;
+
+  LN_postalCode = 'postalCode';
+  NID_postalCode = 661;
+
+  LN_postOfficeBox = 'postOfficeBox';
+  NID_postOfficeBox = 862;
+
+  LN_physicalDeliveryOfficeName = 'physicalDeliveryOfficeName';
+  NID_physicalDeliveryOfficeName = 863;
+
+  LN_telephoneNumber = 'telephoneNumber';
+  NID_telephoneNumber = 864;
+
+  LN_telexNumber = 'telexNumber';
+  NID_telexNumber = 865;
+
+  LN_teletexTerminalIdentifier = 'teletexTerminalIdentifier';
+  NID_teletexTerminalIdentifier = 866;
+
+  LN_facsimileTelephoneNumber = 'facsimileTelephoneNumber';
+  NID_facsimileTelephoneNumber = 867;
+
+  LN_x121Address = 'x121Address';
+  NID_x121Address = 868;
+
+  LN_internationaliSDNNumber = 'internationaliSDNNumber';
+  NID_internationaliSDNNumber = 869;
+
+  LN_registeredAddress = 'registeredAddress';
+  NID_registeredAddress = 870;
+
+  LN_destinationIndicator = 'destinationIndicator';
+  NID_destinationIndicator = 871;
+
+  LN_preferredDeliveryMethod = 'preferredDeliveryMethod';
+  NID_preferredDeliveryMethod = 872;
+
+  LN_presentationAddress = 'presentationAddress';
+  NID_presentationAddress = 873;
+
+  LN_supportedApplicationContext = 'supportedApplicationContext';
+  NID_supportedApplicationContext = 874;
+
+  SN_member = 'member';
+  NID_member = 875;
+
+  SN_owner = 'owner';
+  NID_owner = 876;
+
+  LN_roleOccupant = 'roleOccupant';
+  NID_roleOccupant = 877;
+
+  SN_seeAlso = 'seeAlso';
+  NID_seeAlso = 878;
+
+  LN_userPassword = 'userPassword';
+  NID_userPassword = 879;
+
+  LN_userCertificate = 'userCertificate';
+  NID_userCertificate = 880;
+
+  LN_cACertificate = 'cACertificate';
+  NID_cACertificate = 881;
+
+  LN_authorityRevocationList = 'authorityRevocationList';
+  NID_authorityRevocationList = 882;
+
+  LN_certificateRevocationList = 'certificateRevocationList';
+  NID_certificateRevocationList = 883;
+
+  LN_crossCertificatePair = 'crossCertificatePair';
+  NID_crossCertificatePair = 884;
+
+  SN_name = 'name';
+  LN_name = 'name';
+  NID_name = 173;
+
+  SN_givenName = 'GN';
+  LN_givenName = 'givenName';
+  NID_givenName = 99;
+
+  SN_initials = 'initials';
+  LN_initials = 'initials';
+  NID_initials = 101;
+
+  LN_generationQualifier = 'generationQualifier';
+  NID_generationQualifier = 509;
+
+  LN_x500UniqueIdentifier = 'x500UniqueIdentifier';
+  NID_x500UniqueIdentifier = 503;
+
+  SN_dnQualifier = 'dnQualifier';
+  LN_dnQualifier = 'dnQualifier';
+  NID_dnQualifier = 174;
+
+  LN_enhancedSearchGuide = 'enhancedSearchGuide';
+  NID_enhancedSearchGuide = 885;
+
+  LN_protocolInformation = 'protocolInformation';
+  NID_protocolInformation = 886;
+
+  LN_distinguishedName = 'distinguishedName';
+  NID_distinguishedName = 887;
+
+  LN_uniqueMember = 'uniqueMember';
+  NID_uniqueMember = 888;
+
+  LN_houseIdentifier = 'houseIdentifier';
+  NID_houseIdentifier = 889;
+
+  LN_supportedAlgorithms = 'supportedAlgorithms';
+  NID_supportedAlgorithms = 890;
+
+  LN_deltaRevocationList = 'deltaRevocationList';
+  NID_deltaRevocationList = 891;
+
+  SN_dmdName = 'dmdName';
+  NID_dmdName = 892;
+
+  LN_pseudonym = 'pseudonym';
+  NID_pseudonym = 510;
+
+  SN_role = 'role';
+  LN_role = 'role';
+  NID_role = 400;
+
+  LN_organizationIdentifier = 'organizationIdentifier';
+  NID_organizationIdentifier = 1089;
+
+  SN_countryCode3c = 'c3';
+  LN_countryCode3c = 'countryCode3c';
+  NID_countryCode3c = 1090;
+
+  SN_countryCode3n = 'n3';
+  LN_countryCode3n = 'countryCode3n';
+  NID_countryCode3n = 1091;
+
+  LN_dnsName = 'dnsName';
+  NID_dnsName = 1092;
+
+  SN_X500algorithms = 'X500algorithms';
+  LN_X500algorithms = 'directory services - algorithms';
+  NID_X500algorithms = 378;
+
 var
   X509_get_pubkey : function (a: pX509): pEVP_PKEY; cdecl;
 
@@ -79,20 +296,30 @@ var
   d2i_PKCS7_bio: function(bp: PBIO; var pkcs7: PPKCS7): PPKCS7; cdecl;
   PKCS7_verify: function(p7: PPKCS7; certs: PSTACK_OF_X509; store: PX509_STORE; indata, outdata: PBIO; flags: Integer): Integer cdecl;
   X509_STORE_new: function(): PX509_STORE; cdecl;
+  X509_NAME_print_ex: function(out: PBIO; nm: PX509_NAME; indent: Integer; flags: cardinal): Integer; cdecl;
 
   RAND_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
   RAND_pseudo_bytes : function (buf: PAnsiChar; num: Integer): Integer cdecl;
   RAND_status: function: Integer cdecl;
   RAND_poll: function: Integer cdecl;
   RAND_file_name: function (buf: PAnsiChar; num: Integer): PAnsiChar cdecl;
-  RAND_load_file: function (filename: PAnsiChar; max_bytes: Integer): Integer cdecl;
+  RAND_load_file: function (filename: PAnsiChar; max_bytes: Integer): Integer; cdecl;
   RAND_write_file: function (filename: PAnsiChar): Integer cdecl;
 
-  X509_REQ_set_version: function(x: pX509_REQ; version: Integer): Integer cdecl;
+  X509_REQ_set_version: function(x: pX509_REQ; version: Integer): Integer; cdecl;
+  X509_NAME_get_text_by_NID: function (name: PX509_NAME; nid: Integer; buf: PAnsiChar; len: Integer): Integer; cdecl;
+
+  ASN1_TIME_print: function (bp: PBIO; s: PASN1_TIME): Integer; cdecl;
+  ASN1_TIME_print_ex: function (bp: PBIO; tm: PASN1_TIME; flags: cardinal): Integer; cdecl;
+
+  BN_num_bits: function (a: PBIGNUM): Integer; cdecl;
+  BN_bn2bin : function (a: PBIGNUM; &to: PByte): Integer; cdecl;
 
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
+
+function BN_num_bytes(a: PBIGNUM): Integer;
 
 function LoadOpenSSLLibraryEx :Boolean;
 procedure UnLoadOpenSSLLibraryEx;
@@ -139,6 +366,11 @@ begin
   Result := BIO_to_string(b, TEncoding.ANSI);
 end;
 
+function BN_num_bytes(a: PBIGNUM): Integer;
+begin
+  Result := (BN_num_bits(a)+7) div 8;
+end;
+
 procedure OPENSSL_free(address: pointer);
 begin
   CRYPTO_free(address);
@@ -172,6 +404,14 @@ begin
   RAND_load_file := nil;
   RAND_write_file := nil;
   X509_REQ_set_version := nil;
+  X509_NAME_print_ex := nil;
+  X509_NAME_get_text_by_NID := nil;
+
+  ASN1_TIME_print := nil;
+  ASN1_TIME_print_ex := nil;
+
+  BN_bn2bin := nil;
+  BN_num_bits := nil;
 end;
 
 function LoadOpenSSLLibraryEx :Boolean;
@@ -202,6 +442,7 @@ begin
     d2i_PKCS7_bio := GetProcAddress(hSSL, 'd2i_PKCS7_bio');
     PKCS7_verify := GetProcAddress(hSSL, 'PKCS7_verify');
     X509_STORE_new := GetProcAddress(hSSL, 'X509_STORE_new');
+    X509_NAME_print_ex := GetProcAddress(hSSL, 'X509_NAME_print_ex');
     RAND_bytes := GetProcAddress(hSSL, 'RAND_bytes');
     RAND_pseudo_bytes := GetProcAddress(hSSL, 'RAND_pseudo_bytes');
     RAND_status := GetProcAddress(hSSL, 'RAND_status');
@@ -210,6 +451,13 @@ begin
     RAND_load_file := GetProcAddress(hSSL, 'RAND_load_file');
     RAND_write_file := GetProcAddress(hSSL, 'RAND_write_file');
     X509_REQ_set_version := GetProcAddress(hSSL, 'X509_REQ_set_version');
+    X509_NAME_get_text_by_NID := GetProcAddress(hSSL, 'X509_NAME_get_text_by_NID');
+
+    ASN1_TIME_print := GetProcAddress(hSSL, 'ASN1_TIME_print');
+    ASN1_TIME_print_ex := GetProcAddress(hSSL, 'ASN1_TIME_print_ex');
+
+    BN_bn2bin := GetProcAddress(hSSL, 'BN_bn2bin');
+    BN_num_bits := GetProcAddress(hSSL, 'BN_num_bits');
 
     OpenSSL_add_all_algorithms;
     OpenSSL_add_all_ciphers;

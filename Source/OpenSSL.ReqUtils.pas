@@ -24,32 +24,10 @@ unit OpenSSL.ReqUtils;
 interface
 
 uses
-  System.Classes, System.SysUtils, System.StrUtils,
+  System.Classes, System.SysUtils,
   OpenSSL.libeay32, OpenSSL.Core, OpenSSL.RSAUtils, IdSSLOpenSSLHeaders;
 
 type
-  TSubjectInfo = record
-  private
-    FCommonName: string;
-    FOrganization: string;
-    FOrganizationalUnit: string;
-    FCountry: string;
-    FState: string;
-    FLocality: string;
-    FEmailAddress: string;
-  public
-    class operator Implicit(const Value: string): TSubjectInfo;
-    class operator Implicit(const Value: TSubjectInfo): string;
-
-    property CommonName: string read FCommonName write FCommonName;
-    property Organization: string read FOrganization write FOrganization;
-    property OrganizationalUnit: string read FOrganizationalUnit write FOrganizationalUnit;
-    property Country: string read FCountry write FCountry;
-    property State: string read FState write FState;
-    property Locality: string read FLocality write FLocality;
-    property EmailAddress: string read FEmailAddress write FEmailAddress;
-  end;
-
   TReqUtil = class(TOpenSLLBase)
   private
     FX509: pX509;
@@ -81,118 +59,6 @@ type
   end;
 
 implementation
-
-{ TSubjectInfo }
-
-class operator TSubjectInfo.Implicit(const Value: string): TSubjectInfo;
-var
-  Parts: TArray<string>;
-  Part, Key, Val: string;
-  InQuotes: Boolean;
-  i, Start: Integer;
-  CurrentPart: string;
-begin
-  // Initialize all fields to empty
-  Result.FCommonName := '';
-  Result.FOrganization := '';
-  Result.FOrganizationalUnit := '';
-  Result.FCountry := '';
-  Result.FState := '';
-  Result.FLocality := '';
-  Result.FEmailAddress := '';
-
-  if Value.Trim = '' then
-    Exit;
-
-  // Manual parsing to handle quoted values with commas
-  SetLength(Parts, 0);
-  InQuotes := False;
-  Start := 1;
-  CurrentPart := '';
-
-  for i := 1 to Length(Value) do
-  begin
-    if Value[i] = '"' then
-      InQuotes := not InQuotes
-    else if (Value[i] = ',') and (not InQuotes) then
-    begin
-      CurrentPart := Trim(Copy(Value, Start, i - Start));
-      if CurrentPart <> '' then
-      begin
-        SetLength(Parts, Length(Parts) + 1);
-        Parts[High(Parts)] := CurrentPart;
-      end;
-      Start := i + 1;
-    end;
-  end;
-
-  // Add last part
-  CurrentPart := Trim(Copy(Value, Start, MaxInt));
-  if CurrentPart <> '' then
-  begin
-    SetLength(Parts, Length(Parts) + 1);
-    Parts[High(Parts)] := CurrentPart;
-  end;
-
-  // Parse each part (KEY=VALUE)
-  for Part in Parts do
-  begin
-    i := Pos('=', Part);
-    if i > 0 then
-    begin
-      Key := UpperCase(Trim(Copy(Part, 1, i - 1)));
-      Val := Trim(Copy(Part, i + 1, MaxInt));
-
-      // Remove surrounding quotes if present
-      if (Length(Val) >= 2) and (Val[1] = '"') and (Val[Length(Val)] = '"') then
-        Val := Copy(Val, 2, Length(Val) - 2);
-
-      // Map to fields
-      if Key = 'CN' then Result.FCommonName := Val
-      else if Key = 'O' then Result.FOrganization := Val
-      else if Key = 'OU' then Result.FOrganizationalUnit := Val
-      else if Key = 'C' then Result.FCountry := Val
-      else if Key = 'ST' then Result.FState := Val
-      else if Key = 'L' then Result.FLocality := Val
-      else if Key = 'EMAIL' then Result.FEmailAddress := Val
-      else if Key = 'EMAILADDRESS' then Result.FEmailAddress := Val;
-    end;
-  end;
-end;
-
-class operator TSubjectInfo.Implicit(const Value: TSubjectInfo): string;
-var
-  Parts: TArray<string>;
-
-  procedure AddPart(const Key, Val: string);
-  var
-    QuotedVal: string;
-  begin
-    if Val = '' then Exit;
-
-    // Quote value if it contains comma or special chars
-    if (Pos(',', Val) > 0) or (Pos('=', Val) > 0) then
-      QuotedVal := '"' + Val + '"'
-    else
-      QuotedVal := Val;
-
-    SetLength(Parts, Length(Parts) + 1);
-    Parts[High(Parts)] := Key + '=' + QuotedVal;
-  end;
-
-begin
-  SetLength(Parts, 0);
-
-  AddPart('CN', Value.FCommonName);
-  AddPart('O', Value.FOrganization);
-  AddPart('OU', Value.FOrganizationalUnit);
-  AddPart('C', Value.FCountry);
-  AddPart('ST', Value.FState);
-  AddPart('L', Value.FLocality);
-  AddPart('emailAddress', Value.FEmailAddress);
-
-  Result := string.Join(',', Parts);
-end;
 
 { TReqUtil }
 
