@@ -25,7 +25,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.StrUtils, System.DateUtils,
-  System.AnsiStrings,
+  System.AnsiStrings, Winapi.Windows,
 
   OpenSSL.libeay32, OpenSSL.Core,
 
@@ -172,6 +172,12 @@ type
     procedure PublicEncrypt(const InputFileName, OutputFileName :TFileName; Padding :TRASPadding = rpPKCS); overload;
     procedure PrivateDecrypt(InputStream :TStream; OutputStream :TStream; Padding :TRASPadding = rpPKCS); overload;
     procedure PrivateDecrypt(const InputFileName, OutputFileName :TFileName; Padding :TRASPadding = rpPKCS); overload;
+
+    procedure Sign(MsgStream, SignStream : TStream); overload; // vsgroup
+    procedure Sign(const MsgFileName, SignFileName : TFileName); overload; // vsgroup
+
+    function Verify(MsgStream :TStream; SignStream :TStream) : Boolean; overload; // vsgroup
+    function Verify(const MsgFileName, SignFileName : TFileName) : Boolean; overload; // vsgroup
 
     property PublicKey :TCustomRSAPublicKey read FPublicKey write SetPublicKey;
     property PrivateKey :TCustomRSAPrivateKey read FPrivateKey write SetPrivateKey;
@@ -339,6 +345,118 @@ begin
   FPublicKey := Value;
 end;
 
+procedure TRSAUtil.Sign(const MsgFileName, SignFileName: TFileName);
+var
+  MsgStream, SignStream : TStream;
+begin
+  MsgStream := TFileStream.Create(MsgFileName, fmOpenRead);
+  try
+    SignStream := TFileStream.Create(SignFileName, fmCreate);
+    try
+      Sign(MsgStream, SignStream);
+    finally
+      SignStream.Free;
+    end;
+  finally
+    MsgStream.Free;
+  end;
+end;
+
+function TRSAUtil.Verify(const MsgFileName, SignFileName: TFileName): Boolean;
+var
+  MsgStream, SignStream : TStream;
+begin
+  MsgStream := TFileStream.Create(MsgFileName, fmOpenRead);
+  try
+    SignStream := TFileStream.Create(SignFileName, fmOpenRead);
+    try
+      result := Verify(MsgStream, SignStream);
+    finally
+      SignStream.Free;
+    end;
+  finally
+    MsgStream.Free;
+  end;
+end;
+
+procedure TRSAUtil.Sign(MsgStream, SignStream : TStream);
+var
+  locCtx    : pEVP_MD_CTX;
+  locSHA256 : pEVP_MD;
+  locSize   : Cardinal;
+  locKey    : pEVP_PKEY;
+  InputBuffer :TBytes;
+  OutputBuffer :TBytes;
+begin
+  if not PrivateKey.IsValid then
+    raise Exception.Create('Private key not assigned');
+
+  SetLength(InputBuffer, MsgStream.Size);
+  MsgStream.ReadBuffer(InputBuffer[0], MsgStream.Size);
+
+  locKey := EVP_PKEY_new();
+  try
+    EVP_PKEY_set1_RSA(locKey, PrivateKey.GetRSA);
+
+    locCtx := EVP_MD_CTX_create;
+    try
+      locSHA256 := EVP_sha256();
+
+      EVP_DigestSignInit(locCtx, NIL, locSHA256, NIL, locKey);
+      EVP_DigestSignUpdate(locCtx, PAnsiChar(@InputBuffer[0]), MsgStream.Size);
+      EVP_DigestSignFinal(locCtx, NIL, @locSize);
+
+      SetLength(OutputBuffer, locSize);
+      EVP_DigestSignFinal(locCtx, PAnsiChar(@OutputBuffer[0]), @locSize);
+      SignStream.Write(OutputBuffer[0], locSize);
+    finally
+      EVP_MD_CTX_destroy(locCtx);
+    end;
+  finally
+    EVP_PKEY_free(locKey);
+  end;
+end;
+
+function TRSAUtil.Verify(MsgStream, SignStream: TStream): Boolean;
+var
+  locBio    : pBIO;
+  locCtx    : pEVP_MD_CTX;
+  locSHA256 : pEVP_MD;
+  locKey    : pEVP_PKEY;
+  MsgBuffer :TBytes;
+  SignBuffer :TBytes;
+begin
+  if not PublicKey.IsValid then
+    raise Exception.Create('Public key not assigned');
+
+  SetLength(MsgBuffer, MsgStream.Size);
+  MsgStream.ReadBuffer(MsgBuffer[0], MsgStream.Size);
+
+  SetLength(SignBuffer, SignStream.Size);
+  SignStream.ReadBuffer(SignBuffer[0], SignStream.Size);
+
+  locKey := EVP_PKEY_new();
+  try
+    EVP_PKEY_set1_RSA(locKey, PublicKey.GetRSA);
+
+    locBio := BIO_new( BIO_f_md );
+    try
+      BIO_get_md_ctx( locBio, locCtx);
+      locSHA256 := EVP_sha256();
+
+      EVP_DigestVerifyInit( locCtx, NIL, locSHA256, NIL, locKey);
+      EVP_DigestVerifyUpdate( locCtx, PAnsiChar(@MsgBuffer[0]), MsgStream.Size);
+
+      result := EVP_DigestVerifyFinal(locCtx, PAnsiChar(@SignBuffer[0]), SignStream.Size) = 1;
+    finally
+      BIO_free( locBio );
+    end;
+
+  finally
+    EVP_PKEY_free(locKey);
+  end;
+
+end;
 { TX509Cerificate }
 
 constructor TX509Cerificate.Create;
