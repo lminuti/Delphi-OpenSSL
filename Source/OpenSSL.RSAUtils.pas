@@ -25,7 +25,7 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.StrUtils, System.DateUtils,
-  System.AnsiStrings, Winapi.Windows,
+  System.AnsiStrings,
 
   OpenSSL.libeay32, OpenSSL.Core,
 
@@ -173,11 +173,11 @@ type
     procedure PrivateDecrypt(InputStream :TStream; OutputStream :TStream; Padding :TRASPadding = rpPKCS); overload;
     procedure PrivateDecrypt(const InputFileName, OutputFileName :TFileName; Padding :TRASPadding = rpPKCS); overload;
 
-    procedure Sign(MsgStream, SignStream : TStream); overload; // vsgroup
-    procedure Sign(const MsgFileName, SignFileName : TFileName); overload; // vsgroup
+    procedure Sign(MsgStream, SignStream : TStream); overload;
+    procedure Sign(const MsgFileName, SignFileName : TFileName); overload;
 
-    function Verify(MsgStream :TStream; SignStream :TStream) : Boolean; overload; // vsgroup
-    function Verify(const MsgFileName, SignFileName : TFileName) : Boolean; overload; // vsgroup
+    function Verify(MsgStream :TStream; SignStream :TStream) : Boolean; overload;
+    function Verify(const MsgFileName, SignFileName : TFileName) : Boolean; overload;
 
     property PublicKey :TCustomRSAPublicKey read FPublicKey write SetPublicKey;
     property PrivateKey :TCustomRSAPrivateKey read FPrivateKey write SetPrivateKey;

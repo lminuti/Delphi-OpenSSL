@@ -50,7 +50,8 @@ uses
   SSLDemo.EncFrame,
   SSLDemo.UnpackPKCS7Frame,
   SSLDemo.RandFrame,
-  SSLDemo.KeyPairFrame;
+  SSLDemo.KeyPairFrame,
+  SSLDemo.SignFrame;
 
 { TMainForm }
 
@@ -73,6 +74,7 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   AddFrame('Tutorial', TMainFrame);
   AddFrame('Encryption', TEncFrame);
+  AddFrame('Sign', TSignFrame);
   AddFrame('Random', TRandomFrame);
   AddFrame('Unpack PKCS7', TUnpackPKCS7Frame);
   AddFrame('KeyPair', TKeyPairFrame);

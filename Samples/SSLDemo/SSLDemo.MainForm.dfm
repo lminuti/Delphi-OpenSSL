@@ -20,7 +20,5 @@ object MainForm: TMainForm
     Height = 635
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 613
-    ExplicitHeight = 544
   end
 end

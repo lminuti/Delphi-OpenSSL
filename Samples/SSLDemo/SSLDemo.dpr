@@ -35,7 +35,8 @@ uses
   OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas',
   SSLDemo.KeyPairFrame in 'SSLDemo.KeyPairFrame.pas' {KeyPairFrame: TFrame},
   OpenSSL.RSAUtils in '..\..\Source\OpenSSL.RSAUtils.pas',
-  OpenSSL.ReqUtils in '..\..\Source\OpenSSL.ReqUtils.pas';
+  OpenSSL.ReqUtils in '..\..\Source\OpenSSL.ReqUtils.pas',
+  SSLDemo.SignFrame in 'SSLDemo.SignFrame.pas' {SignFrame: TFrame};
 
 {$R *.res}
 

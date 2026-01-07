@@ -73,6 +73,16 @@ type
     procedure TestCertificateDaysUntilExpiration;
     [Test]
     procedure TestPrintCertificateInfo;
+    [Test]
+    procedure TestSignAndVerify;
+    [Test]
+    procedure TestSignAndVerifyWithFiles;
+    [Test]
+    procedure TestVerifyInvalidSignature;
+    [Test]
+    procedure TestSignWithoutPrivateKey;
+    [Test]
+    procedure TestVerifyWithoutPublicKey;
   end;
 
 implementation
@@ -596,6 +606,240 @@ begin
     end;
   finally
     Certificate.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestSignAndVerify;
+var
+  RSAUtil: TRSAUtil;
+  MsgStream, SignStream: TMemoryStream;
+  OriginalMessage: string;
+  MessageBytes: TBytes;
+  IsValid: Boolean;
+begin
+  RSAUtil := TRSAUtil.Create;
+  try
+    // Load keys
+    RSAUtil.PrivateKey.LoadFromStream(FPrivateKeyStream);
+    RSAUtil.PublicKey.LoadFromStream(FPublicKeyStream);
+
+    // Prepare test message
+    OriginalMessage := 'This is a test message for signing';
+    MessageBytes := TEncoding.UTF8.GetBytes(OriginalMessage);
+
+    MsgStream := TMemoryStream.Create;
+    try
+      MsgStream.Write(MessageBytes[0], Length(MessageBytes));
+      MsgStream.Position := 0;
+
+      // Sign the message
+      SignStream := TMemoryStream.Create;
+      try
+        RSAUtil.Sign(MsgStream, SignStream);
+        Assert.IsTrue(SignStream.Size > 0, 'Signature stream should not be empty');
+
+        // Verify the signature
+        MsgStream.Position := 0;
+        SignStream.Position := 0;
+        IsValid := RSAUtil.Verify(MsgStream, SignStream);
+        Assert.IsTrue(IsValid, 'Signature verification should succeed');
+      finally
+        SignStream.Free;
+      end;
+    finally
+      MsgStream.Free;
+    end;
+  finally
+    RSAUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestSignAndVerifyWithFiles;
+var
+  RSAUtil: TRSAUtil;
+  MsgFileName, SignFileName: string;
+  MsgStream: TFileStream;
+  TestMessage: string;
+  MessageBytes: TBytes;
+  IsValid: Boolean;
+begin
+  RSAUtil := TRSAUtil.Create;
+  try
+    // Load keys
+    RSAUtil.PrivateKey.LoadFromStream(FPrivateKeyStream);
+    RSAUtil.PublicKey.LoadFromStream(FPublicKeyStream);
+
+    // Create test files
+    MsgFileName := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'test_message.txt';
+    SignFileName := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'test_signature.sig';
+
+    // Write test message to file
+    TestMessage := 'Test message for file signing';
+    MessageBytes := TEncoding.UTF8.GetBytes(TestMessage);
+    MsgStream := TFileStream.Create(MsgFileName, fmCreate);
+    try
+      MsgStream.Write(MessageBytes[0], Length(MessageBytes));
+    finally
+      MsgStream.Free;
+    end;
+
+    try
+      // Sign the file
+      RSAUtil.Sign(MsgFileName, SignFileName);
+      Assert.IsTrue(FileExists(SignFileName), 'Signature file should be created');
+
+      // Verify the signature
+      IsValid := RSAUtil.Verify(MsgFileName, SignFileName);
+      Assert.IsTrue(IsValid, 'File signature verification should succeed');
+    finally
+      // Cleanup
+      if FileExists(MsgFileName) then
+        DeleteFile(MsgFileName);
+      if FileExists(SignFileName) then
+        DeleteFile(SignFileName);
+    end;
+  finally
+    RSAUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestVerifyInvalidSignature;
+var
+  RSAUtil: TRSAUtil;
+  MsgStream, SignStream, InvalidSignStream: TMemoryStream;
+  MessageBytes, SignBytes: TBytes;
+  IsValid: Boolean;
+begin
+  RSAUtil := TRSAUtil.Create;
+  try
+    // Load keys
+    RSAUtil.PrivateKey.LoadFromStream(FPrivateKeyStream);
+    RSAUtil.PublicKey.LoadFromStream(FPublicKeyStream);
+
+    // Prepare test message
+    MessageBytes := TEncoding.UTF8.GetBytes('Test message');
+
+    MsgStream := TMemoryStream.Create;
+    try
+      MsgStream.Write(MessageBytes[0], Length(MessageBytes));
+      MsgStream.Position := 0;
+
+      // Sign the message
+      SignStream := TMemoryStream.Create;
+      try
+        RSAUtil.Sign(MsgStream, SignStream);
+        Assert.IsTrue(SignStream.Size > 0, 'Signature should be created');
+
+        // Create an invalid signature (corrupt the original)
+        SignStream.Position := 0;
+        SetLength(SignBytes, SignStream.Size);
+        SignStream.Read(SignBytes[0], SignStream.Size);
+
+        // Corrupt the signature by modifying a byte
+        if Length(SignBytes) > 0 then
+          SignBytes[0] := SignBytes[0] xor $FF;
+
+        InvalidSignStream := TMemoryStream.Create;
+        try
+          InvalidSignStream.Write(SignBytes[0], Length(SignBytes));
+          InvalidSignStream.Position := 0;
+
+          // Verify should fail with corrupted signature
+          MsgStream.Position := 0;
+          IsValid := RSAUtil.Verify(MsgStream, InvalidSignStream);
+          Assert.IsFalse(IsValid, 'Verification should fail with invalid signature');
+        finally
+          InvalidSignStream.Free;
+        end;
+      finally
+        SignStream.Free;
+      end;
+    finally
+      MsgStream.Free;
+    end;
+  finally
+    RSAUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestSignWithoutPrivateKey;
+var
+  RSAUtil: TRSAUtil;
+  MsgStream, SignStream: TMemoryStream;
+  MessageBytes: TBytes;
+begin
+  RSAUtil := TRSAUtil.Create;
+  try
+    // Don't load any key
+
+    MessageBytes := TEncoding.UTF8.GetBytes('Test message');
+    MsgStream := TMemoryStream.Create;
+    try
+      MsgStream.Write(MessageBytes[0], Length(MessageBytes));
+      MsgStream.Position := 0;
+
+      SignStream := TMemoryStream.Create;
+      try
+        // Should raise an exception
+        Assert.WillRaise(
+          procedure
+          begin
+            RSAUtil.Sign(MsgStream, SignStream);
+          end,
+          Exception,
+          'Sign should raise exception when private key is not assigned'
+        );
+      finally
+        SignStream.Free;
+      end;
+    finally
+      MsgStream.Free;
+    end;
+  finally
+    RSAUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLRSAUtilsTest.TestVerifyWithoutPublicKey;
+var
+  RSAUtil: TRSAUtil;
+  MsgStream, SignStream: TMemoryStream;
+  MessageBytes, DummySignBytes: TBytes;
+begin
+  RSAUtil := TRSAUtil.Create;
+  try
+    // Don't load any key
+
+    MessageBytes := TEncoding.UTF8.GetBytes('Test message');
+    DummySignBytes := TEncoding.UTF8.GetBytes('Dummy signature');
+
+    MsgStream := TMemoryStream.Create;
+    try
+      MsgStream.Write(MessageBytes[0], Length(MessageBytes));
+      MsgStream.Position := 0;
+
+      SignStream := TMemoryStream.Create;
+      try
+        SignStream.Write(DummySignBytes[0], Length(DummySignBytes));
+        SignStream.Position := 0;
+
+        // Should raise an exception
+        Assert.WillRaise(
+          procedure
+          begin
+            RSAUtil.Verify(MsgStream, SignStream);
+          end,
+          Exception,
+          'Verify should raise exception when public key is not assigned'
+        );
+      finally
+        SignStream.Free;
+      end;
+    finally
+      MsgStream.Free;
+    end;
+  finally
+    RSAUtil.Free;
   end;
 end;
 
