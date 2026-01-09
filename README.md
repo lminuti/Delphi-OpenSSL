@@ -12,6 +12,7 @@ A [Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](htt
 - Basic SMIME support
 - Generate RSA KeyPairs in PKCS PEM format
 - Generate self-signed X.509 certificates and Certificate Signing Requests (CSR)
+- Experimental support for newer OpenSSL versions (1.1.1 and 3.x)
 
 ## Usage
 
@@ -208,3 +209,25 @@ So when working with a 64-bit Windows, remember:
 
 - Add the source path "Source" to your Delphi project path
 - Run the demo and follow the tutorial
+
+## TaurusTLS Support (Experimental)
+
+Experimental support for newer OpenSSL versions (1.1.1 and 3.x) has been added through [TaurusTLS](https://github.com/TaurusTLS-Developers/TaurusTLS).
+
+### Enabling TaurusTLS
+
+To enable TaurusTLS support, uncomment the `USE_TAURUS_TLS` directive in the `Source/OpenSSL.inc` file:
+
+```pascal
+{$DEFINE USE_TAURUS_TLS}
+{$DEFINE USE_INLINE}
+```
+
+### Requirements
+
+- [TaurusTLS](https://github.com/TaurusTLS-Developers/TaurusTLS) must be installed in your Delphi environment
+- The appropriate OpenSSL DLLs must be available on your system
+
+Refer to the [TaurusTLS documentation](https://github.com/TaurusTLS-Developers/TaurusTLS) for instructions on how to obtain and install the required OpenSSL libraries.
+
+> **Note:** This feature is experimental. Please report any issues you encounter.
