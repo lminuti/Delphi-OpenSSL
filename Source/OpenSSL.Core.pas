@@ -23,10 +23,27 @@ unit OpenSSL.Core;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
-  System.Classes, System.SysUtils, System.StrUtils, IdSSLOpenSSLHeaders, OpenSSL.libeay32;
+  System.Classes, System.SysUtils, System.StrUtils,
+  {$IFNDEF USE_TAURUS_TLS}
+  OpenSSL.libeay32, IdSSLOpenSSLHeaders;
+  {$ELSE}
+  TaurusTLSHeaders_types, TaurusTLSHeaders_evp,
+  TaurusTLSHeaders_bio, TaurusTLSHeaders_rand,
+  TaurusTLSHeaders_bn, TaurusTLSHeaders_x509,
+  TaurusTLSHeaders_err, TaurusTLSLoader;
+  {$ENDIF}
 
 type
+  {$IFDEF USE_TAURUS_TLS}
+  TIdC_LONG  = LongInt;
+  TIdC_INT   = Integer;
+  SIZE_T = NativeUInt;
+
+  {$ENDIF}
+
   TRASPadding = (
     rpPKCS,           // use PKCS#1 v1.5 padding (default),
     rpOAEP,           // use PKCS#1 OAEP
@@ -49,6 +66,8 @@ type
   public
     class operator Implicit(const Value: string): TSubjectInfo;
     class operator Implicit(const Value: TSubjectInfo): string;
+
+    constructor Create(const Value: string; Delimiter: Char);
 
     property CommonName: string read FCommonName write FCommonName;
     property Organization: string read FOrganization write FOrganization;
@@ -113,7 +132,213 @@ procedure EVP_GetKeyIV(APassword: string; ACipher: PEVP_CIPHER; const ASalt: TBy
 function Base64Encode(InputBuffer :TBytes) :TBytes;
 function Base64Decode(InputBuffer :TBytes) :TBytes;
 
+function BIO_read(b: PBIO; var OutputBuffer :TBytes): Integer;
+function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
+function BIO_new_mem_buf(InputBuffer :TBytes): PBIO;
+
+{$IFDEF USE_TAURUS_TLS}
+function BIO_flush(b : PBIO) : TIdC_INT;
+function BIO_get_md_ctx(b : PBIO; var mdcp : PEVP_MD_CTX) : TIdC_LONG;
+function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
+function BIO_to_string(b : PBIO): string; overload;
+function BIO_pending(b : PBIO) : TIdC_INT;
+
+function EVP_MD_CTX_create : PEVP_MD_CTX;
+function EVP_MD_CTX_init(ctx: PEVP_MD_CTX): TIdC_INT;
+procedure EVP_MD_CTX_destroy(ctx: PEVP_MD_CTX);
+function EVP_DigestSignUpdate(a : PEVP_MD_CTX; b : Pointer; c : SIZE_T) : TIdC_Int;
+function EVP_DigestVerifyUpdate(a : PEVP_MD_CTX; b : Pointer; c : size_t) : TIdC_INT;
+
+function BN_num_bytes(a: PBIGNUM): Integer;
+
+function X509_get_notBefore(x509: PX509):PASN1_TIME;
+function X509_get_notAfter(x509: PX509):PASN1_TIME;
+{$ENDIF}
+
+function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer;
+function EVP_DecryptFinal(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer;
+function EVP_DecryptFinal_ex(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer;
+function EVP_EncryptUpdate(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer; _in : PByte; inl : integer): integer;
+function EVP_EncryptFinal_ex(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer) : integer;
+
+function LoadOpenSSLLibrary: boolean;
+procedure UnLoadOpenSSLLibrary;
+
 implementation
+
+function LoadOpenSSLLibrary: boolean;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := OpenSSL.libeay32.LoadOpenSSLLibraryEx;
+  {$ELSE}
+  Result := GetOpenSSLLoader.Load;
+  {$ENDIF}
+end;
+
+procedure UnLoadOpenSSLLibrary;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  OpenSSL.libeay32.UnLoadOpenSSLLibraryEx;
+  {$ELSE}
+  GetOpenSSLLoader.Unload;
+  {$ENDIF}
+end;
+
+{$IFDEF USE_TAURUS_TLS}
+function BIO_flush(b : PBIO) : TIdC_INT; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := BIO_ctrl(b,BIO_CTRL_FLUSH,0,nil);
+end;
+
+function BIO_get_md_ctx(b : PBIO; var mdcp : PEVP_MD_CTX) : TIdC_LONG; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := BIO_ctrl(b,BIO_C_GET_MD_CTX,0,@mdcp);
+end;
+
+function EVP_MD_CTX_create : PEVP_MD_CTX; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := EVP_MD_CTX_new;
+end;
+
+function EVP_MD_CTX_init(ctx: PEVP_MD_CTX): TIdC_INT; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := EVP_MD_CTX_reset(ctx);
+end;
+
+procedure EVP_MD_CTX_destroy(ctx: PEVP_MD_CTX); {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  EVP_MD_CTX_free(ctx);
+end;
+
+function EVP_DigestSignUpdate(a : PEVP_MD_CTX; b : Pointer; c : SIZE_T) : TIdC_Int; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := EVP_DigestUpdate(a,b,SIZE_T(c));
+end;
+
+function EVP_DigestVerifyUpdate(a : PEVP_MD_CTX; b : Pointer; c : size_t) : TIdC_INT; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := EVP_DigestUpdate(a,b,size_t(c));
+end;
+
+function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
+const
+  BuffSize = 1024;
+var
+  Buffer: TBytes;
+begin
+  Result := '';
+  SetLength(Buffer, BuffSize);
+  while BIO_read(b, buffer) > 0 do
+  begin
+    Result := Result + Encoding.GetString(Buffer);
+  end;
+end;
+
+function BIO_to_string(b : PBIO): string; overload;
+begin
+  Result := BIO_to_string(b, TEncoding.ANSI);
+end;
+
+function BN_num_bytes(a: PBIGNUM): Integer;
+begin
+  Result := (BN_num_bits(a)+7) div 8;
+end;
+
+function X509_get_notBefore(x509: PX509):PASN1_TIME; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Assert(x509<>nil);
+  Result := X509_get0_notBefore(x509);
+end;
+
+function X509_get_notAfter(x509: PX509):PASN1_TIME; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Assert(x509<>nil);
+  Result := X509_get0_notAfter(x509);
+end;
+
+function BIO_pending(b : PBIO) : TIdC_INT; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := BIO_ctrl(b,BIO_CTRL_PENDING_const,0,nil);
+end;
+
+{$ENDIF}
+
+function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_DecryptUpdate(ctx, PAnsiChar(data_out), @outl, PAnsiChar(data_in), inl);
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_DecryptUpdate(ctx, data_out[0], outl, data_in^, inl);
+  {$ENDIF}
+end;
+
+function EVP_DecryptFinal(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_DecryptFinal(ctx, PAnsiChar(data_out), @outl);
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_DecryptFinal(ctx, data_out, outl);
+  {$ENDIF}
+end;
+
+function EVP_DecryptFinal_ex(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_DecryptFinal_ex(ctx, PAnsiChar(outm), @outl);
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_DecryptFinal_ex(PEVP_MD_CTX(ctx), outm^, outl);
+  {$ENDIF}
+end;
+
+function EVP_EncryptUpdate(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer; _in : PByte; inl : integer): integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_EncryptUpdate(ctx, PAnsiChar(_out), @outl, PAnsiChar(_in), inl);
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_EncryptUpdate(ctx, _out[0], outl, _in^, inl);
+  {$ENDIF}
+end;
+
+function EVP_EncryptFinal_ex(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer) : integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_EncryptFinal_ex(ctx, PAnsiChar(_out), @outl);
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_EncryptFinal_ex(ctx, _out[0], outl);
+  {$ENDIF}
+end;
+
+function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := BIO_ctrl(b,BIO_CTRL_INFO,0,pp);
+end;
+
+function BIO_new_mem_buf(InputBuffer :TBytes): PBIO;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.BIO_new_mem_buf(InputBuffer, Length(InputBuffer));
+  {$ELSE}
+  Result := TaurusTLSHeaders_bio.BIO_new_mem_buf(InputBuffer[0], Length(InputBuffer));
+  {$ENDIF}
+end;
+
+function BIO_read(b: PBIO; var OutputBuffer :TBytes): Integer;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.BIO_read(b, @OutputBuffer[0], Length(OutputBuffer));
+  {$ELSE}
+  Result := TaurusTLSHeaders_bio.BIO_read(b, OutputBuffer[0], Length(OutputBuffer));
+  {$ENDIF}
+end;
+
+function BIO_write(b: PBIO; InputBuffer :TBytes): Integer;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.BIO_write(b, InputBuffer, Length(InputBuffer));
+  {$ELSE}
+  Result := TaurusTLSHeaders_bio.BIO_write(b, InputBuffer[0], Length(InputBuffer));
+  {$ENDIF}
+end;
 
 function Base64Encode(InputBuffer :TBytes) :TBytes;
 var
@@ -125,11 +350,11 @@ begin
   bio := BIO_new(BIO_s_mem());
   BIO_push(b64, bio);
 
-  BIO_write(b64, @InputBuffer[0], Length(InputBuffer));
+  BIO_write(b64, InputBuffer);
   BIO_flush(b64);
 
   bdata := nil;
-  datalen :=  OpenSSL.libeay32.BIO_get_mem_data(bio, @bdata);
+  datalen :=  BIO_get_mem_data(bio, @bdata);
   SetLength(Result, datalen);
   Move(bdata^, Result[0], datalen);
 
@@ -142,12 +367,12 @@ var
   datalen :Integer;
 begin
   b64 := BIO_new(BIO_f_base64());
-  bio := BIO_new_mem_buf(InputBuffer, Length(InputBuffer));
+  bio := BIO_new_mem_buf(InputBuffer);
   try
     BIO_push(b64, bio);
 
     SetLength(Result, Length(InputBuffer));
-    datalen := BIO_read(b64, @Result[0], Length(InputBuffer));
+    datalen := BIO_read(b64, Result);
     if datalen < 0 then
       RaiseOpenSSLError('Base64 error');
 
@@ -161,7 +386,11 @@ end;
 function EVP_GetSalt: TBytes;
 begin
   SetLength(result, PKCS5_SALT_LEN);
+  {$IFNDEF USE_TAURUS_TLS}
   RAND_pseudo_bytes(@result[0], PKCS5_SALT_LEN);
+  {$ELSE}
+  RAND_bytes(@result[0], PKCS5_SALT_LEN);
+  {$ENDIF}
 end;
 
 procedure EVP_GetKeyIV(APassword: TBytes; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes);
@@ -209,8 +438,13 @@ end;
 
 class procedure TOpenSLLBase.CheckOpenSSLLibrary;
 begin
+  {$IFNDEF USE_TAURUS_TLS}
   if not LoadOpenSSLLibraryEx then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
+  {$ELSE}
+  if not GetOpenSSLLoader.Load then
+    raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
+  {$ENDIF}
 end;
 
 { EOpenSSLLibError }
@@ -224,6 +458,11 @@ end;
 { TSubjectInfo }
 
 class operator TSubjectInfo.Implicit(const Value: string): TSubjectInfo;
+begin
+  Result := TSubjectInfo.Create(Value, '/');
+end;
+
+constructor TSubjectInfo.Create(const Value: string; Delimiter: Char);
 var
   StringList: TStringList;
 begin
@@ -231,22 +470,22 @@ begin
   try
     StringList.StrictDelimiter := True;
     StringList.NameValueSeparator := '=';
-    StringList.Delimiter := '/';
+    StringList.Delimiter := Delimiter;
     StringList.DelimitedText := Value;
 
     // Remove the first empty element
     if (StringList.Count > 0) and (StringList[0] = '') then
       StringList.Delete(0);
 
-    Result.FCommonName := StringList.Values['CN'];
-    Result.FOrganization := StringList.Values['O'];
-    Result.FOrganizationalUnit := StringList.Values['OU'];
-    Result.FCountry := StringList.Values['C'];
-    Result.FState := StringList.Values['ST'];
-    Result.FLocality := StringList.Values['L'];
-    Result.FEmailAddress := StringList.Values['EMAIL'];
-    if Result.FEmailAddress = '' then
-      Result.FEmailAddress := StringList.Values['EMAILADDRESS'];
+    FCommonName := StringList.Values['CN'];
+    FOrganization := StringList.Values['O'];
+    FOrganizationalUnit := StringList.Values['OU'];
+    FCountry := StringList.Values['C'];
+    FState := StringList.Values['ST'];
+    FLocality := StringList.Values['L'];
+    FEmailAddress := StringList.Values['EMAIL'];
+    if FEmailAddress = '' then
+      FEmailAddress := StringList.Values['EMAILADDRESS'];
 
   finally
     StringList.Free;

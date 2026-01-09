@@ -1,4 +1,4 @@
-{******************************************************************************}
+﻿{******************************************************************************}
 {                                                                              }
 {  Delphi OPENSSL Library                                                      }
 {  Copyright (c) Luca Minuti                                                   }
@@ -23,10 +23,11 @@ unit OpenSSL.Tests.EncUtils;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.SysUtils, System.Classes,
   DUnitX.TestFramework,
-
   OpenSSL.EncUtils, OpenSSL.Core;
 
 type
@@ -60,14 +61,11 @@ type
 
 implementation
 
-uses
-  OpenSSL.libeay32, IdSSLOpenSSLHeaders;
-
 { TOpenSSLEncUtilsTest }
 
 procedure TOpenSSLEncUtilsTest.Setup;
 begin
-  if not LoadOpenSSLLibraryEx then
+  if not OpenSSL.Core.LoadOpenSSLLibrary then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 end;
 
@@ -222,16 +220,14 @@ var
   OriginalBytes, EncryptedBytes, DecryptedBytes: TBytes;
   OriginalText, DecryptedText: string;
   Key, IV: TBytes;
-  Cipher: PEVP_CIPHER;
   Salt: TBytes;
 begin
   EncUtil := TEncUtil.Create;
   try
     // Generate key and IV from a password
-    Cipher := EVP_aes_256_cbc();
-    SetLength(Salt, PKCS5_SALT_LEN);
-    FillChar(Salt[0], PKCS5_SALT_LEN, $42);
-    EVP_GetKeyIV('TestPassword', Cipher, Salt, Key, IV);
+    SetLength(Salt, SALT_SIZE);
+    FillChar(Salt[0], SALT_SIZE, $42);
+    TEncUtil.GenerateKeyIV('TestPassword', 'AES', Salt, Key, IV);
 
     // Use key-based encryption
     EncUtil.Passphrase := TPassphrase.Create(Key, IV);

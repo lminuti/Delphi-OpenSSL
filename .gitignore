@@ -2,6 +2,7 @@
 *.dcu
 *.local
 *.exe
+*.dll
 *.identcache
 __history
 *.~*
@@ -18,3 +19,4 @@ TestData/*.p7m
 TestData/*.txt
 TestData/TestPKCS7-out.pdf
 Packages/12.0AthensAndAbove/37.0/
+

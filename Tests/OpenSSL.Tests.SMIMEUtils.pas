@@ -23,6 +23,8 @@ unit OpenSSL.Tests.SMIMEUtils;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.SysUtils, System.Classes, System.IOUtils,
   DUnitX.TestFramework,
@@ -49,14 +51,11 @@ type
 
 implementation
 
-uses
-  OpenSSL.libeay32;
-
 { TOpenSSLSMIMEUtilsTest }
 
 procedure TOpenSSLSMIMEUtilsTest.Setup;
 begin
-  if not LoadOpenSSLLibraryEx then
+  if not OpenSSL.Core.LoadOpenSSLLibrary then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 end;
 

@@ -21,15 +21,23 @@
 {******************************************************************************}
 unit OpenSSL.RSAUtils;
 
+{$I OpenSSL.inc}
+
 interface
 
 uses
   System.Classes, System.SysUtils, System.StrUtils, System.DateUtils,
   System.AnsiStrings,
 
-  OpenSSL.libeay32, OpenSSL.Core,
+  {$IFNDEF USE_TAURUS_TLS}
+  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
+  {$ELSE}
+  TaurusTLSHeaders_types, TaurusTLSHeaders_evp, TaurusTLSHeaders_bio,
+  TaurusTLSHeaders_rsa, TaurusTLSHeaders_x509, TaurusTLSHeaders_pem,
+  TaurusTLSHeaders_obj_mac, TaurusTLSHeaders_asn1, TaurusTLSHeaders_bn,
+  {$ENDIF}
 
-  IdSSLOpenSSLHeaders;
+  OpenSSL.Core;
 
 type
   TX509Cerificate = class;
@@ -407,7 +415,11 @@ begin
       EVP_DigestSignFinal(locCtx, NIL, @locSize);
 
       SetLength(OutputBuffer, locSize);
+      {$IFNDEF USE_TAURUS_TLS}
       EVP_DigestSignFinal(locCtx, PAnsiChar(@OutputBuffer[0]), @locSize);
+      {$ELSE}
+      EVP_DigestSignFinal(locCtx, @OutputBuffer[0], @locSize);
+      {$ENDIF}
       SignStream.Write(OutputBuffer[0], locSize);
     finally
       EVP_MD_CTX_destroy(locCtx);
@@ -447,7 +459,11 @@ begin
       EVP_DigestVerifyInit( locCtx, NIL, locSHA256, NIL, locKey);
       EVP_DigestVerifyUpdate( locCtx, PAnsiChar(@MsgBuffer[0]), MsgStream.Size);
 
+      {$IFNDEF USE_TAURUS_TLS}
       result := EVP_DigestVerifyFinal(locCtx, PAnsiChar(@SignBuffer[0]), SignStream.Size) = 1;
+      {$ELSE}
+      result := EVP_DigestVerifyFinal(locCtx, @SignBuffer[0], SignStream.Size) = 1;
+      {$ENDIF}
     finally
       BIO_free( locBio );
     end;
@@ -546,7 +562,7 @@ begin
 
   SetLength(FBuffer, AStream.Size);
   AStream.ReadBuffer(FBuffer[0], AStream.Size);
-  KeyFile := BIO_new_mem_buf(FBuffer, Length(FBuffer));
+  KeyFile := OpenSSL.Core.BIO_new_mem_buf(FBuffer);
   if KeyFile = nil then
     RaiseOpenSSLError('X509 load stream error');
   try
@@ -616,7 +632,11 @@ begin
   Bio := BIO_new(BIO_s_mem());
   try
     ASN1_TIME_print(Bio, ASN1Time);
-    Len := BIO_read(Bio, @Buffer[0], SizeOf(Buffer) - 1);
+    {$IFNDEF USE_TAURUS_TLS}
+    Len := IdSSLOpenSSLHeaders.BIO_read(Bio, @Buffer[0], SizeOf(Buffer) - 1);
+    {$ELSE}
+    Len := TaurusTLSHeaders_bio.BIO_read(Bio, Buffer[0], SizeOf(Buffer) - 1);
+    {$ENDIF}
     if Len > 0 then
     begin
       Buffer[Len] := #0;
@@ -888,7 +908,7 @@ begin
     end;
 
     SetLength(Buffer, KeyLength);
-    BIO_read(PrivateKey, @Buffer[0], KeyLength);
+    BIO_read(PrivateKey, Buffer);
   finally
     BIO_free(PrivateKey);
   end;
@@ -993,7 +1013,7 @@ begin
     end;
 
     SetLength(Buffer, KeyLength);
-    BIO_read(PublicKey, @Buffer[0], KeyLength);
+    BIO_read(PublicKey, Buffer);
   finally
     BIO_free(PublicKey);
   end;
@@ -1093,7 +1113,7 @@ end;
 procedure TRSAPrivateKey.LoadFromStream(AStream: TStream; AFormat: TPrivateKeyFormat = kpDefault);
 var
   KeyBuffer :pBIO;
-  cb : ppem_password_cb;
+  cb : {$IFNDEF USE_TAURUS_TLS}ppem_password_cb{$ELSE}pem_password_cb{$ENDIF};
   pKey : PEVP_PKEY;
 begin
   cb := nil;
@@ -1102,7 +1122,7 @@ begin
 
   SetLength(FBuffer, AStream.Size);
   AStream.ReadBuffer(FBuffer[0], AStream.Size);
-  KeyBuffer := BIO_new_mem_buf(FBuffer, Length(FBuffer));
+  KeyBuffer := OpenSSL.Core.BIO_new_mem_buf(FBuffer);
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try
@@ -1193,7 +1213,7 @@ var
 begin
   SetLength(FBuffer, AStream.Size);
   AStream.ReadBuffer(FBuffer[0], AStream.Size);
-  KeyBuffer := BIO_new_mem_buf(FBuffer, Length(FBuffer));
+  KeyBuffer := OpenSSL.Core.BIO_new_mem_buf(FBuffer);
   if KeyBuffer = nil then
     RaiseOpenSSLError('RSA load stream error');
   try

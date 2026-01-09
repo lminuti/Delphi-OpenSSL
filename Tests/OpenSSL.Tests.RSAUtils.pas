@@ -23,6 +23,8 @@ unit OpenSSL.Tests.RSAUtils;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.SysUtils, System.Classes,
   DUnitX.TestFramework,
@@ -86,9 +88,6 @@ type
   end;
 
 implementation
-
-uses
-  OpenSSL.libeay32;
 
 const
   // Test public key (PEM format)
@@ -162,7 +161,7 @@ const
 
 procedure TOpenSSLRSAUtilsTest.Setup;
 begin
-  if not LoadOpenSSLLibraryEx then
+  if not OpenSSL.Core.LoadOpenSSLLibrary then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 
   FPublicKeyStream := TStringStream.Create(TEST_PUBLIC_KEY, TEncoding.UTF8);

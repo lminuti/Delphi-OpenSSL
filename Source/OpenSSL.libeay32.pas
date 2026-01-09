@@ -315,7 +315,6 @@ var
   BN_num_bits: function (a: PBIGNUM): Integer; cdecl;
   BN_bn2bin : function (a: PBIGNUM; &to: PByte): Integer; cdecl;
 
-function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
 
@@ -341,11 +340,6 @@ var
 //function X509_get_pubkey(a: pX509): pEVP_PKEY; cdecl; external LIBEAY_DLL_NAME;
 //
 //procedure BIO_free_all(a: pBIO); cdecl; external LIBEAY_DLL_NAME;
-
-function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
-begin
-  Result := BIO_ctrl(b,BIO_CTRL_INFO,0,pp);
-end;
 
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string;
 const

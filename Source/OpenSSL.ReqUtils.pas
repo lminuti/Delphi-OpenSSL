@@ -23,9 +23,17 @@ unit OpenSSL.ReqUtils;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.Classes, System.SysUtils,
-  OpenSSL.libeay32, OpenSSL.Core, OpenSSL.RSAUtils, IdSSLOpenSSLHeaders;
+  {$IFNDEF USE_TAURUS_TLS}
+  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
+  {$ELSE}
+  TaurusTLSHeaders_types, TaurusTLSHeaders_x509, TaurusTLSHeaders_asn1,
+  TaurusTLSHeaders_bio, TaurusTLSHeaders_evp, TaurusTLSHeaders_pem,
+  {$ENDIF}
+  OpenSSL.Core, OpenSSL.RSAUtils;
 
 type
   TReqUtil = class(TOpenSLLBase)
@@ -59,6 +67,15 @@ type
   end;
 
 implementation
+
+function X509_NAME_add_entry_by_string(name: PX509_NAME; const field: string; const Value: string): Integer;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result:= X509_NAME_add_entry_by_txt(Name, PAnsiChar(AnsiString(field)), MBSTRING_ASC, PAnsiChar(AnsiString(Value)), -1, -1, 0);
+  {$ELSE}
+  Result:= X509_NAME_add_entry_by_txt(Name, PAnsiChar(AnsiString(field)), MBSTRING_ASC, PByte(AnsiString(Value)), -1, -1, 0);
+  {$ENDIF}
+end;
 
 { TReqUtil }
 
@@ -105,50 +122,43 @@ begin
 
   if Subject.Country <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'C', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.Country)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'C', Subject.Country) = 0 then
       RaiseOpenSSLError('Failed to add Country to subject');
   end;
 
   if Subject.State <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'ST', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.State)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'ST', Subject.State) = 0 then
       RaiseOpenSSLError('Failed to add State to subject');
   end;
 
   if Subject.Locality <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'L', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.Locality)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'L', Subject.Locality) = 0 then
       RaiseOpenSSLError('Failed to add Locality to subject');
   end;
 
   if Subject.Organization <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'O', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.Organization)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'O', Subject.Organization) = 0 then
       RaiseOpenSSLError('Failed to add Organization to subject');
   end;
 
   if Subject.OrganizationalUnit <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'OU', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.OrganizationalUnit)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'OU', Subject.OrganizationalUnit) = 0 then
       RaiseOpenSSLError('Failed to add OrganizationalUnit to subject');
   end;
 
   if Subject.CommonName <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'CN', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.CommonName)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'CN', Subject.CommonName) = 0 then
       RaiseOpenSSLError('Failed to add CommonName to subject');
   end;
 
   if Subject.EmailAddress <> '' then
   begin
-    if X509_NAME_add_entry_by_txt(Name, 'emailAddress', MBSTRING_ASC,
-       PAnsiChar(AnsiString(Subject.EmailAddress)), -1, -1, 0) = 0 then
+    if X509_NAME_add_entry_by_string(Name, 'emailAddress', Subject.EmailAddress) = 0 then
       RaiseOpenSSLError('Failed to add EmailAddress to subject');
   end;
 end;
@@ -326,7 +336,7 @@ begin
 
     KeyLength := BIO_pending(Bio);
     SetLength(Buffer, KeyLength);
-    BIO_read(Bio, @Buffer[0], KeyLength);
+    BIO_read(Bio, Buffer);
     AStream.Write(Buffer[0], Length(Buffer));
   finally
     BIO_free(Bio);
@@ -363,7 +373,7 @@ begin
 
     KeyLength := BIO_pending(Bio);
     SetLength(Buffer, KeyLength);
-    BIO_read(Bio, @Buffer[0], KeyLength);
+    BIO_read(Bio, Buffer);
     AStream.Write(Buffer[0], Length(Buffer));
   finally
     BIO_free(Bio);

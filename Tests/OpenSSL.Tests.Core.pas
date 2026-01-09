@@ -23,11 +23,21 @@ unit OpenSSL.Tests.Core;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.SysUtils,
   DUnitX.TestFramework,
 
-  OpenSSL.Core, IdSSLOpenSSLHeaders;
+  {$IFNDEF USE_TAURUS_TLS}
+  IdSSLOpenSSLHeaders,
+  OpenSSL.libeay32,
+  {$ELSE}
+  TaurusTLSHeaders_evp,
+  TaurusTLSHeaders_types,
+  {$ENDIF}
+
+  OpenSSL.Core;
 
 type
   [TestFixture]
@@ -82,6 +92,8 @@ type
     [Test]
     procedure TestSubjectInfoImplicitFromString;
     [Test]
+    procedure TestSubjectInfoImplicitFromStringDelimiter;
+    [Test]
     procedure TestSubjectInfoImplicitToString;
     [Test]
     procedure TestSubjectInfoRoundTrip;
@@ -107,14 +119,11 @@ type
 
 implementation
 
-uses
-  OpenSSL.libeay32;
-
 { TOpenSSLCoreTest }
 
 procedure TOpenSSLCoreTest.Setup;
 begin
-  if not LoadOpenSSLLibraryEx then
+  if not OpenSSL.Core.LoadOpenSSLLibrary then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 end;
 
@@ -347,6 +356,20 @@ var
   Subject: TSubjectInfo;
 begin
   Subject := '/CN=www.example.com/O=Example Inc/OU=IT/C=US/ST=California/L=San Francisco';
+
+  Assert.AreEqual('www.example.com', Subject.CommonName);
+  Assert.AreEqual('Example Inc', Subject.Organization);
+  Assert.AreEqual('IT', Subject.OrganizationalUnit);
+  Assert.AreEqual('US', Subject.Country);
+  Assert.AreEqual('California', Subject.State);
+  Assert.AreEqual('San Francisco', Subject.Locality);
+end;
+
+procedure TOpenSSLCoreTest.TestSubjectInfoImplicitFromStringDelimiter;
+var
+  Subject: TSubjectInfo;
+begin
+  Subject := TSubjectInfo.Create('CN=www.example.com,O=Example Inc,OU=IT,C=US,ST=California,L=San Francisco', ',');
 
   Assert.AreEqual('www.example.com', Subject.CommonName);
   Assert.AreEqual('Example Inc', Subject.Organization);

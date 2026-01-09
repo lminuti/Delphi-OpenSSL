@@ -23,16 +23,22 @@ unit OpenSSL.Tests.RandUtils;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.SysUtils, System.IOUtils,
   DUnitX.TestFramework,
 
+  OpenSSL.Core,
   OpenSSL.RandUtils;
 
 type
   [TestFixture]
   TOpenSSLRandUtilsTest = class(TObject)
   public
+    [Setup]
+    procedure Setup;
+
     [Test]
     procedure TestGetRandomBytesLength;
     [Test]
@@ -46,9 +52,6 @@ type
   end;
 
 implementation
-
-uses
-  OpenSSL.libeay32;
 
 { TOpenSSLRandUtilsTest }
 
@@ -84,6 +87,12 @@ begin
   IsInitialized := TRandUtil.Initialized;
   // Just verify it returns without exception
   Assert.IsTrue(IsInitialized);
+end;
+
+procedure TOpenSSLRandUtilsTest.Setup;
+begin
+  if not OpenSSL.Core.LoadOpenSSLLibrary then
+    raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 end;
 
 procedure TOpenSSLRandUtilsTest.TestGetDefaultSeedFileNameNotEmpty;

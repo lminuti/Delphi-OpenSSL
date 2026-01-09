@@ -23,6 +23,8 @@ unit OpenSSL.Tests.ReqUtils;
 
 interface
 
+{$I OpenSSL.inc}
+
 uses
   System.SysUtils, System.Classes,
   DUnitX.TestFramework,
@@ -41,6 +43,8 @@ type
     [Test]
     procedure TestSaveCertificateToStream;
     [Test]
+    procedure TestCertificateContent;
+    [Test]
     procedure TestCertificateValidity;
 
     // CSR generation tests
@@ -58,14 +62,11 @@ type
 
 implementation
 
-uses
-  OpenSSL.libeay32;
-
 { TOpenSSLReqUtilsTest }
 
 procedure TOpenSSLReqUtilsTest.Setup;
 begin
-  if not LoadOpenSSLLibraryEx then
+  if not OpenSSL.Core.LoadOpenSSLLibrary then
     raise EOpenSSLError.Create('Cannot open "OpenSSL" library');
 end;
 
@@ -76,11 +77,46 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateSelfSignedCertificate(Subject, 365, 1024);
 
     Assert.IsNotNull(ReqUtil.PrivateKey, 'PrivateKey should not be nil');
     Assert.IsTrue(ReqUtil.PrivateKey.IsValid, 'PrivateKey should be valid');
+  finally
+    ReqUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLReqUtilsTest.TestCertificateContent;
+var
+  ReqUtil: TReqUtil;
+  Subject: TSubjectInfo;
+  Stream: TMemoryStream;
+  Certificate: TX509Cerificate;
+begin
+  ReqUtil := TReqUtil.Create;
+  try
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
+    ReqUtil.GenerateSelfSignedCertificate(Subject, 365, 1024);
+
+    Stream := TMemoryStream.Create;
+    try
+      ReqUtil.SaveCertificateToStream(Stream);
+      Assert.IsTrue(Stream.Size > 0, 'Certificate stream is empty');
+
+      Stream.Position := 0;
+      Certificate := TX509Cerificate.Create;
+      try
+        Certificate.LoadFromStream(Stream);
+        Assert.AreEqual('localhost', Certificate.Subject.CommonName, 'Unexpected CommonName');
+        Assert.AreEqual('TestCompany', Certificate.Subject.Organization, 'Unexpected Organization');
+        Assert.AreEqual('IT', Certificate.Subject.Country, 'Unexpected Country');
+      finally
+        Certificate.Free;
+      end;
+    finally
+      Stream.Free;
+    end;
   finally
     ReqUtil.Free;
   end;
@@ -96,7 +132,7 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateSelfSignedCertificate(Subject, 365, 1024);
 
     Stream := TMemoryStream.Create;
@@ -128,7 +164,7 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateSelfSignedCertificate(Subject, 365, 1024);
 
     // Save and reload certificate
@@ -159,7 +195,7 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateCSR(Subject, 1024);
 
     Assert.IsNotNull(ReqUtil.PrivateKey, 'PrivateKey should not be nil');
@@ -179,7 +215,7 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateCSR(Subject, 1024);
 
     Stream := TMemoryStream.Create;
@@ -212,7 +248,7 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateSelfSignedCertificate(Subject, 365, 1024);
 
     // Save private key to stream
@@ -247,7 +283,7 @@ var
 begin
   ReqUtil := TReqUtil.Create;
   try
-    Subject := 'CN=localhost,O=TestCompany,C=IT';
+    Subject := 'CN=localhost/O=TestCompany/C=IT';
     ReqUtil.GenerateSelfSignedCertificate(Subject, 365, 1024);
 
     // Save public key to stream

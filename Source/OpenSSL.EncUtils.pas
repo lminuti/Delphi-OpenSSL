@@ -25,11 +25,18 @@
 
 unit OpenSSL.EncUtils;
 
+{$I OpenSSL.inc}
+
 interface
 
 uses
   System.Classes, System.SysUtils, System.AnsiStrings, Generics.Collections,
-  OpenSSL.libeay32, OpenSSL.Core, IdSSLOpenSSLHeaders;
+  {$IFNDEF USE_TAURUS_TLS}
+  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
+  {$ELSE}
+  TaurusTLSHeaders_types, TaurusTLSHeaders_evp,
+  {$ENDIF}
+  OpenSSL.Core;
 
 type
   TCipherName = string;
@@ -75,9 +82,11 @@ type
     FCipher: TCipherName;
     procedure SetCipher(const Value: TCipherName);
   public
-    class procedure RegisterCipher(const Name :TCipherName; Proc :TCipherProc);
-    class procedure RegisterDefaultCiphers;
-    class procedure SupportedCiphers(Ciphers :TStrings);
+    class procedure RegisterCipher(const Name :TCipherName; Proc :TCipherProc); static;
+    class procedure RegisterDefaultCiphers; static;
+    class procedure SupportedCiphers(Ciphers :TStrings); static;
+    // Generate Key and Initialization Vector
+    class procedure GenerateKeyIV(const APassword: string; Cipher: TCipherName; Salt: TBytes; var Key, IV: TBytes); static;
   public
     constructor Create; override;
     // will be encoded in UTF8
@@ -174,11 +183,11 @@ begin
 
     SetLength(OutputBuffer, InputStream.Size);
     BuffStart := 0;
-    if OpenSSL.libeay32.EVP_DecryptUpdate(Context, @OutputBuffer[BuffStart], OutputLen, @InputBuffer[InputStart], Length(InputBuffer) - InputStart) <> 1 then
+    if OpenSSL.Core.EVP_DecryptUpdate(Context, @OutputBuffer[BuffStart], OutputLen, @InputBuffer[InputStart], Length(InputBuffer) - InputStart) <> 1 then
       RaiseOpenSSLError('Cannot decrypt');
     Inc(BuffStart, OutputLen);
 
-    if OpenSSL.libeay32.EVP_DecryptFinal_ex(Context, @OutputBuffer[BuffStart], OutputLen) <> 1 then
+    if OpenSSL.Core.EVP_DecryptFinal_ex(Context, @OutputBuffer[BuffStart], OutputLen) <> 1 then
       RaiseOpenSSLError('Cannot finalize decryption process');
     Inc(BuffStart, OutputLen);
 
@@ -250,11 +259,11 @@ begin
     else
       SetLength(OutputBuffer, Length(InputBuffer) + BlockSize);
 
-    if EVP_EncryptUpdate(Context, @OutputBuffer[BuffStart], @OutputLen, @InputBuffer[0], Length(InputBuffer)) <> 1 then
+    if OpenSSL.Core.EVP_EncryptUpdate(Context, @OutputBuffer[BuffStart], OutputLen, @InputBuffer[0], Length(InputBuffer)) <> 1 then
       RaiseOpenSSLError('Cannot encrypt');
     Inc(BuffStart, OutputLen);
 
-    if EVP_EncryptFinal_ex(Context, @OutputBuffer[BuffStart], @OutputLen) <> 1 then
+    if OpenSSL.Core.EVP_EncryptFinal_ex(Context, @OutputBuffer[BuffStart], OutputLen) <> 1 then
       RaiseOpenSSLError('Cannot finalize encryption process');
     Inc(BuffStart, OutputLen);
     SetLength(OutputBuffer, BuffStart);
@@ -375,11 +384,13 @@ begin
   RegisterCipher('DESX', EVP_desx_cbc);
 
   // IDEA algorithm
+  {$IFNDEF USE_TAURUS_TLS}
   RegisterCipher('IDEA-CBC', EVP_idea_cbc);
   RegisterCipher('IDEA', EVP_idea_cbc);
   RegisterCipher('IDEA-CFB', EVP_idea_cfb64);
   RegisterCipher('IDEA-ECB', EVP_idea_ecb);
   RegisterCipher('IDEA-OFB', EVP_idea_ofb);
+  {$ENDIF}
 
   // RC2
   RegisterCipher('RC2-CBC', EVP_rc2_cbc);
@@ -532,6 +543,12 @@ begin
   InputBytes := ActualEncoding.GetBytes(InputStr);
   Encrypt(InputBytes, EncryptedBytes);
   Result := TEncoding.ANSI.GetString(Base64Encode(EncryptedBytes));
+end;
+
+class procedure TEncUtil.GenerateKeyIV(const APassword: string; Cipher: TCipherName;
+  Salt: TBytes; var Key, IV: TBytes);
+begin
+  EVP_GetKeyIV(APassword, FCipherList.GetProc(Cipher), Salt, Key, IV);
 end;
 
 function TEncUtil.DecryptStr(const InputStr: string; Encoding: TEncoding): string;
