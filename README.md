@@ -1,5 +1,11 @@
 # Delphi OpenSSL Library
 
+<br />
+<p align="center">
+  <img src="DelphiOpenSSL.png" alt="Delphi OpenSSL" width="200" />
+</p>
+
+
 A [Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](https://openssl.org/), providing high-level object-oriented interfaces for cryptographic operations. This library simplifies the use of OpenSSL's powerful encryption capabilities in Delphi applications, offering easy-to-use classes for RSA encryption, symmetric ciphers, digital signatures, and certificate handling.
 
 ## Features
