@@ -92,7 +92,7 @@ var
   ReqUtil: TReqUtil;
   Subject: TSubjectInfo;
   Stream: TMemoryStream;
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
 begin
   ReqUtil := TReqUtil.Create;
   try
@@ -105,7 +105,7 @@ begin
       Assert.IsTrue(Stream.Size > 0, 'Certificate stream is empty');
 
       Stream.Position := 0;
-      Certificate := TX509Cerificate.Create;
+      Certificate := TX509Certificate.Create;
       try
         Certificate.LoadFromStream(Stream);
         Assert.AreEqual('localhost', Certificate.Subject.CommonName, 'Unexpected CommonName');
@@ -159,7 +159,7 @@ procedure TOpenSSLReqUtilsTest.TestCertificateValidity;
 var
   ReqUtil: TReqUtil;
   Subject: TSubjectInfo;
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   CertStream: TMemoryStream;
 begin
   ReqUtil := TReqUtil.Create;
@@ -173,7 +173,7 @@ begin
       ReqUtil.SaveCertificateToStream(CertStream);
       CertStream.Position := 0;
 
-      Certificate := TX509Cerificate.Create;
+      Certificate := TX509Certificate.Create;
       try
         Certificate.LoadFromStream(CertStream);
         Assert.IsTrue(Certificate.IsValid, 'Loaded certificate is not valid');

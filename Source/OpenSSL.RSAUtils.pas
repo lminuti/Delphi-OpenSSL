@@ -40,7 +40,7 @@ uses
   OpenSSL.Core;
 
 type
-  TX509Cerificate = class;
+  TX509Certificate = class;
 
   TPassphraseEvent = procedure (Sender :TObject; var Passphrase :string) of object;
 
@@ -51,7 +51,7 @@ type
   TCustomRSAPublicKey = class(TOpenSLLBase)
   private
     FBuffer: TBytes;
-    FCerificate :TX509Cerificate;
+    FCertificate :TX509Certificate;
   protected
     function GetRSA :PRSA; virtual; abstract;
     procedure FreeRSA; virtual; abstract;
@@ -62,7 +62,7 @@ type
     function IsValid :Boolean;
     procedure LoadFromFile(const FileName :string; AFormat: TPublicKeyFormat = kfDefault); virtual;
     procedure LoadFromStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); virtual;
-    procedure LoadFromCertificate(Cerificate :TX509Cerificate);
+    procedure LoadFromCertificate(Certificate :TX509Certificate);
     procedure SaveToFile(const FileName :string; AFormat: TPublicKeyFormat = kfDefault); virtual;
     procedure SaveToStream(AStream :TStream; AFormat: TPublicKeyFormat = kfDefault); virtual;
     property RSA: PRSA read GetRSA;
@@ -112,7 +112,7 @@ type
   end;
 
   // certificate containing an RSA public key
-  TX509Cerificate = class(TOpenSLLBase)
+  TX509Certificate = class(TOpenSLLBase)
   private
     FBuffer: TBytes;
     FPublicRSA :PRSA;
@@ -148,6 +148,9 @@ type
     property NotAfter: TDateTime read GetNotAfter;
     property Version: Integer read GetVersion;
   end;
+
+  // Backward compatibility alias (typo in original name)
+  TX509Cerificate = TX509Certificate;
 
   TRSAKeyPair = class(TOpenSLLBase)
   private
@@ -473,22 +476,22 @@ begin
   end;
 
 end;
-{ TX509Cerificate }
+{ TX509Certificate }
 
-constructor TX509Cerificate.Create;
+constructor TX509Certificate.Create;
 begin
   inherited;
   FPublicRSA := nil;
 end;
 
-destructor TX509Cerificate.Destroy;
+destructor TX509Certificate.Destroy;
 begin
   FreeRSA;
   FreeX509;
   inherited;
 end;
 
-procedure TX509Cerificate.FreeRSA;
+procedure TX509Certificate.FreeRSA;
 begin
   if FPublicRSA <> nil then
   begin
@@ -497,13 +500,13 @@ begin
   end;
 end;
 
-procedure TX509Cerificate.FreeX509;
+procedure TX509Certificate.FreeX509;
 begin
   if FX509 <> nil then
     X509_free(FX509);
 end;
 
-function TX509Cerificate.GetPublicRSA: PRSA;
+function TX509Certificate.GetPublicRSA: PRSA;
 var
   Key: pEVP_PKEY;
 begin
@@ -522,12 +525,12 @@ begin
   Result := FPublicRSA;
 end;
 
-function TX509Cerificate.IsValid: Boolean;
+function TX509Certificate.IsValid: Boolean;
 begin
   Result := Assigned(FX509);
 end;
 
-function TX509Cerificate.Print: string;
+function TX509Certificate.Print: string;
 var
   bp: PBIO;
 begin
@@ -541,7 +544,7 @@ begin
   end;
 end;
 
-procedure TX509Cerificate.LoadFromFile(const FileName: string);
+procedure TX509Certificate.LoadFromFile(const FileName: string);
 var
   Stream: TStream;
 begin
@@ -553,7 +556,7 @@ begin
   end;
 end;
 
-procedure TX509Cerificate.LoadFromStream(AStream: TStream);
+procedure TX509Certificate.LoadFromStream(AStream: TStream);
 var
   KeyFile :pBIO;
 begin
@@ -683,7 +686,7 @@ begin
   end;
 end;
 
-function TX509Cerificate.GetSubject: TSubjectInfo;
+function TX509Certificate.GetSubject: TSubjectInfo;
 var
   Name: pX509_NAME;
 begin
@@ -697,7 +700,7 @@ begin
   Result := X509NameToSubjectInfo(Name);
 end;
 
-function TX509Cerificate.GetIssuer: TSubjectInfo;
+function TX509Certificate.GetIssuer: TSubjectInfo;
 var
   Name: pX509_NAME;
 begin
@@ -711,7 +714,7 @@ begin
   Result := X509NameToSubjectInfo(Name);
 end;
 
-function TX509Cerificate.GetSerialNumber: TSerialNumber;
+function TX509Certificate.GetSerialNumber: TSerialNumber;
 var
   ASN1Serial: PASN1_INTEGER;
   bn: PBIGNUM;
@@ -739,7 +742,7 @@ begin
   end;
 end;
 
-function TX509Cerificate.GetNotBefore: TDateTime;
+function TX509Certificate.GetNotBefore: TDateTime;
 var
   ASN1Time: PASN1_TIME;
 begin
@@ -750,7 +753,7 @@ begin
   Result := ASN1TimeToDateTime(ASN1Time);
 end;
 
-function TX509Cerificate.GetNotAfter: TDateTime;
+function TX509Certificate.GetNotAfter: TDateTime;
 var
   ASN1Time: PASN1_TIME;
 begin
@@ -761,7 +764,7 @@ begin
   Result := ASN1TimeToDateTime(ASN1Time);
 end;
 
-function TX509Cerificate.GetVersion: Integer;
+function TX509Certificate.GetVersion: Integer;
 begin
   if not IsValid then
     raise EOpenSSLError.Create('Certificate not loaded');
@@ -771,27 +774,27 @@ begin
   Result := X509_get_version(FX509) + 1;
 end;
 
-function TX509Cerificate.IsExpired: Boolean;
+function TX509Certificate.IsExpired: Boolean;
 begin
   Result := Now > NotAfter;
 end;
 
-function TX509Cerificate.IsValidNow: Boolean;
+function TX509Certificate.IsValidNow: Boolean;
 begin
   Result := IsValidAt(Now);
 end;
 
-function TX509Cerificate.IsValidAt(ADateTime: TDateTime): Boolean;
+function TX509Certificate.IsValidAt(ADateTime: TDateTime): Boolean;
 begin
   Result := (ADateTime >= NotBefore) and (ADateTime <= NotAfter);
 end;
 
-function TX509Cerificate.DaysUntilExpiration: Integer;
+function TX509Certificate.DaysUntilExpiration: Integer;
 begin
   Result := Trunc(NotAfter - Now);
 end;
 
-function TX509Cerificate.PrintCertificateInfo: string;
+function TX509Certificate.PrintCertificateInfo: string;
 var
   SB: TStringBuilder;
 begin
@@ -933,9 +936,9 @@ begin
   Result := GetRSA <> nil;
 end;
 
-procedure TCustomRSAPublicKey.LoadFromCertificate(Cerificate: TX509Cerificate);
+procedure TCustomRSAPublicKey.LoadFromCertificate(Certificate: TX509Certificate);
 begin
-  FCerificate := Cerificate;
+  FCertificate := Certificate;
 end;
 
 procedure TCustomRSAPublicKey.LoadFromFile(const FileName: string; AFormat: TPublicKeyFormat = kfDefault);
@@ -1199,8 +1202,8 @@ end;
 
 function TRSAPublicKey.GetRSA: PRSA;
 begin
-  if Assigned(FCerificate) then
-    Result := FCerificate.GetPublicRSA
+  if Assigned(FCertificate) then
+    Result := FCertificate.GetPublicRSA
   else
     Result := FRSA;
 end;

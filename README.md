@@ -28,17 +28,17 @@ A [Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](htt
 ```delphi
 var
   RSAUtil :TRSAUtil;
-  Cerificate :TX509Cerificate;
+  Certificate :TX509Certificate;
 begin
   RSAUtil := TRSAUtil.Create;
   try
-    Cerificate := TX509Cerificate.Create;
+    Certificate := TX509Certificate.Create;
     try
-      Cerificate.LoadFromFile('publiccert.cer');
-      RSAUtil.PublicKey.LoadFromCertificate(Cerificate);
+      Certificate.LoadFromFile('publiccert.cer');
+      RSAUtil.PublicKey.LoadFromCertificate(Certificate);
       RSAUtil.PublicEncrypt('test.txt', 'test.txt.cry');
     finally
-      Cerificate.Free;
+      Certificate.Free;
     end;
   finally
     RSAUtil.Free;
@@ -166,14 +166,17 @@ end;
 ```
 
 
-## Todo
+## Core Units
 
-- Symmetric cryptography (partially done)
-- compute hash functions
-- Sign e verify
-- RSA data management
-- Data managing for X509
-- Manage information according to the PKCS #12 standard
+| Unit | Purpose |
+|------|---------|
+| `OpenSSL.Core.pas` | Base classes, error handling, `TSubjectInfo`/`TSerialNumber` records, utility functions (Base64, EVP helpers) |
+| `OpenSSL.RSAUtils.pas` | RSA operations: `TRSAUtil`, `TRSAPublicKey`, `TRSAPrivateKey`, `TX509Certificate`, `TRSAKeyPair` |
+| `OpenSSL.EncUtils.pas` | Symmetric encryption: `TEncUtil` with cipher support (AES, etc.) |
+| `OpenSSL.RandUtils.pas` | Random number generation: `TRandUtil` |
+| `OpenSSL.ReqUtils.pas` | Certificate/CSR generation: `TReqUtil` |
+| `OpenSSL.SMIMEUtils.pas` | S/MIME support: `TSMIMEUtil` |
+| `OpenSSL.libeay32.pas` | Low-level OpenSSL DLL bindings (used when not using TaurusTLS) |
 
 ## Prerequisite
 

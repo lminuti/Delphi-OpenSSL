@@ -208,10 +208,10 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestLoadCertificate;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -227,11 +227,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestPublicKeyFromCertificate;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   PublicKey: TRSAPublicKey;
   Stream: TStringStream;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -385,11 +385,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateSubject;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   Subject: TSubjectInfo;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -413,11 +413,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateIssuer;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   Issuer: TSubjectInfo;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -440,12 +440,12 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateSerialNumber;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   SerialNumber: TSerialNumber;
   SerialHex: string;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -470,11 +470,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateDates;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   NotBefore, NotAfter: TDateTime;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -499,11 +499,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateVersion;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   Version: Integer;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -523,11 +523,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateIsValid;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   FutureDate, PastDate: TDateTime;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -553,11 +553,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestCertificateDaysUntilExpiration;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   Days: Integer;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try
@@ -579,11 +579,11 @@ end;
 
 procedure TOpenSSLRSAUtilsTest.TestPrintCertificateInfo;
 var
-  Certificate: TX509Cerificate;
+  Certificate: TX509Certificate;
   Stream: TStringStream;
   Info: string;
 begin
-  Certificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
     Stream := TStringStream.Create(TEST_CERTIFICATE, TEncoding.UTF8);
     try

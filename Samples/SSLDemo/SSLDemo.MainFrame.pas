@@ -110,17 +110,17 @@ end;
 procedure TMainFrame.btnCryptWithCertClick(Sender: TObject);
 var
   RSAUtil :TRSAUtil;
-  Cerificate :TX509Cerificate;
+  Certificate :TX509Certificate;
 begin
   RSAUtil := TRSAUtil.Create;
   try
-    Cerificate := TX509Cerificate.Create;
+    Certificate := TX509Certificate.Create;
     try
-      Cerificate.LoadFromFile(edtCertFile.Text);
-      RSAUtil.PublicKey.LoadFromCertificate(Cerificate);
+      Certificate.LoadFromFile(edtCertFile.Text);
+      RSAUtil.PublicKey.LoadFromCertificate(Certificate);
       RSAUtil.PublicEncrypt(edtTextToCrypt.Text, edtTextToCrypt.Text + '.certcry');
     finally
-      Cerificate.Free;
+      Certificate.Free;
     end;
   finally
     RSAUtil.Free;
@@ -144,14 +144,14 @@ end;
 
 procedure TMainFrame.BtnPrintCertificateClick(Sender: TObject);
 var
-  Cerificate :TX509Cerificate;
+  Certificate :TX509Certificate;
 begin
-  Cerificate := TX509Cerificate.Create;
+  Certificate := TX509Certificate.Create;
   try
-    Cerificate.LoadFromFile(edtCertFile.Text);
-    ShowMessage(Cerificate.PrintCertificateInfo);
+    Certificate.LoadFromFile(edtCertFile.Text);
+    ShowMessage(Certificate.PrintCertificateInfo);
   finally
-    Cerificate.Free;
+    Certificate.Free;
   end;
 end;
 
