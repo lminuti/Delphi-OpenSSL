@@ -214,6 +214,9 @@ var
   cipher: PEVP_CIPHER;
   BlockSize :Integer;
   BuffStart :Integer;
+
+  KeyPtr: PAnsiChar;
+  IVPtr: PAnsiChar;
 begin
   BuffStart := 0;
   SetLength(Salt, 0);
@@ -244,7 +247,13 @@ begin
     RaiseOpenSSLError('Cannot initialize context');
 
   try
-    if EVP_EncryptInit_ex(Context, cipher, nil, @Key[0], @InitVector[0]) <> 1 then
+    KeyPtr := PAnsiChar(@Key[0]);
+    if Length(InitVector) > 0 then
+      IVPtr := PAnsiChar(@InitVector[0])
+    else
+      IVPtr := nil;
+
+    if EVP_EncryptInit_ex(Context, cipher, nil, KeyPtr, IVPtr) <> 1 then
       RaiseOpenSSLError('Cannot initialize encryption process');
 
     BlockSize := EVP_CIPHER_CTX_block_size(Context);
