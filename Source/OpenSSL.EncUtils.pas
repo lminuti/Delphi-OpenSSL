@@ -127,6 +127,9 @@ var
   Salt :TBytes;
   BuffStart :Integer;
   InputStart :Integer;
+
+  KeyPtr: PAnsiChar;
+  IVPtr: PAnsiChar;
 begin
   if Assigned(FCipherProc) then
     Cipher := FCipherProc()
@@ -177,8 +180,16 @@ begin
     RaiseOpenSSLError('Cannot initialize context');
 
   try
+    KeyPtr := PAnsiChar(@Key[0]);
+    if EVP_CIPHER_iv_length(Cipher) > 0 then begin
+      if Length(InitVector) <> EVP_CIPHER_iv_length(Cipher) then
+        RaiseOpenSSLError('Invalid IV length for cipher');
+      IVPtr := PAnsiChar(@InitVector[0]);
+    end
+    else
+      IVPtr := nil;
 
-    if EVP_DecryptInit_ex(Context, Cipher, nil, @Key[0], @InitVector[0]) <> 1 then
+    if EVP_DecryptInit_ex(Context, Cipher, nil, KeyPtr, IVPtr) <> 1 then
       RaiseOpenSSLError('Cannot initialize decryption process');
 
     SetLength(OutputBuffer, InputStream.Size);
@@ -214,6 +225,9 @@ var
   cipher: PEVP_CIPHER;
   BlockSize :Integer;
   BuffStart :Integer;
+
+  KeyPtr: PAnsiChar;
+  IVPtr: PAnsiChar;
 begin
   BuffStart := 0;
   SetLength(Salt, 0);
@@ -244,7 +258,16 @@ begin
     RaiseOpenSSLError('Cannot initialize context');
 
   try
-    if EVP_EncryptInit_ex(Context, cipher, nil, @Key[0], @InitVector[0]) <> 1 then
+    KeyPtr := PAnsiChar(@Key[0]);
+    if EVP_CIPHER_iv_length(Cipher) > 0 then begin
+      if Length(InitVector) <> EVP_CIPHER_iv_length(Cipher) then
+        RaiseOpenSSLError('Invalid IV length for cipher');
+      IVPtr := PAnsiChar(@InitVector[0]);
+    end
+    else
+      IVPtr := nil;
+
+    if EVP_EncryptInit_ex(Context, cipher, nil, KeyPtr, IVPtr) <> 1 then
       RaiseOpenSSLError('Cannot initialize encryption process');
 
     BlockSize := EVP_CIPHER_CTX_block_size(Context);
