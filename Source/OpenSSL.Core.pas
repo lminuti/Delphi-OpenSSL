@@ -97,7 +97,8 @@ type
     property Data: TBytes read FData;
   end;
 
-  EOpenSSLError = Exception;
+  EOpenSSLError = class(Exception)
+  end;
 
   EOpenSSLLibError = class(EOpenSSLError)
   private
@@ -394,11 +395,17 @@ begin
 end;
 
 procedure EVP_GetKeyIV(APassword: TBytes; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes);
+var
+  IVLen, KeyLen: Integer;
 begin
-  SetLength(Key, EVP_MAX_KEY_LENGTH);
-  SetLength(iv, EVP_MAX_IV_LENGTH);
-
-  EVP_BytesToKey(ACipher,EVP_md5, @ASalt[0] ,@APassword[0]  , Length(APassword),1, @Key[0], @IV[0]);
+  KeyLen := ACipher^.key_len;
+  IVLen  := ACipher^.iv_len;
+  SetLength(Key, KeyLen);
+  SetLength(IV, IVLen);
+  if IVLen > 0 then
+    EVP_BytesToKey(ACipher, EVP_md5, @ASalt[0], @APassword[0], Length(APassword), 1, @Key[0], @IV[0])
+  else
+    EVP_BytesToKey(ACipher, EVP_md5, @ASalt[0], @APassword[0], Length(APassword), 1, @Key[0], nil);
 end;
 
 procedure EVP_GetKeyIV(APassword: string; ACipher: PEVP_CIPHER; const ASalt: TBytes; out Key, IV: TBytes);

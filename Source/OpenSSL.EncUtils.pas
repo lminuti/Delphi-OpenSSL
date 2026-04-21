@@ -181,7 +181,8 @@ begin
 
   try
     KeyPtr := PAnsiChar(@Key[0]);
-    if EVP_CIPHER_iv_length(Cipher) > 0 then begin
+    if EVP_CIPHER_iv_length(Cipher) > 0 then
+    begin
       if Length(InitVector) <> EVP_CIPHER_iv_length(Cipher) then
         RaiseOpenSSLError('Invalid IV length for cipher');
       IVPtr := PAnsiChar(@InitVector[0]);
@@ -259,7 +260,8 @@ begin
 
   try
     KeyPtr := PAnsiChar(@Key[0]);
-    if EVP_CIPHER_iv_length(Cipher) > 0 then begin
+    if EVP_CIPHER_iv_length(Cipher) > 0 then
+    begin
       if Length(InitVector) <> EVP_CIPHER_iv_length(Cipher) then
         RaiseOpenSSLError('Invalid IV length for cipher');
       IVPtr := PAnsiChar(@InitVector[0]);

@@ -57,6 +57,10 @@ type
     procedure TestEncryptDecryptStr;
     [Test]
     procedure TestEncryptDecryptStrWithEncoding;
+    [Test]
+    procedure TestInvalidIVLengthRaises;
+    [Test]
+    procedure TestECBRoundtripWithExplicitKey;
   end;
 
 implementation
@@ -286,6 +290,69 @@ begin
 
     DecryptedStr := EncUtil.DecryptStr(EncryptedStr, TEncoding.UTF8);
     Assert.AreEqual(OriginalStr, DecryptedStr);
+  finally
+    EncUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLEncUtilsTest.TestInvalidIVLengthRaises;
+var
+  EncUtil: TEncUtil;
+  Key, WrongIV: TBytes;
+  Input, Output: TBytes;
+begin
+  EncUtil := TEncUtil.Create;
+  try
+    // AES-256-CBC requires a 16-byte IV; passing 8 bytes must be rejected.
+    SetLength(Key, 32);
+    FillChar(Key[0], Length(Key), $41);
+
+    SetLength(WrongIV, 8);
+    FillChar(WrongIV[0], Length(WrongIV), $42);
+
+    EncUtil.Cipher := 'AES-256-CBC';
+    EncUtil.Passphrase := TPassphrase.Create(Key, WrongIV);
+
+    Input := TEncoding.UTF8.GetBytes('payload');
+
+    Assert.WillRaise(
+      procedure
+      begin
+        EncUtil.Encrypt(Input, Output);
+      end,
+      EOpenSSLLibError,
+      'Expected EOpenSSLError for invalid IV length on AES-256-CBC');
+  finally
+    EncUtil.Free;
+  end;
+end;
+
+procedure TOpenSSLEncUtilsTest.TestECBRoundtripWithExplicitKey;
+var
+  EncUtil: TEncUtil;
+  Key, EmptyIV: TBytes;
+  OriginalBytes, EncryptedBytes, DecryptedBytes: TBytes;
+  OriginalText, DecryptedText: string;
+begin
+  EncUtil := TEncUtil.Create;
+  try
+    // AES-256-ECB does not use an IV; caller must be able to pass an empty one.
+    SetLength(Key, 32);
+    FillChar(Key[0], Length(Key), $41);
+    SetLength(EmptyIV, 0);
+
+    EncUtil.Cipher := 'AES-256-ECB';
+    EncUtil.Passphrase := TPassphrase.Create(Key, EmptyIV);
+
+    OriginalText := 'ECB roundtrip without IV';
+    OriginalBytes := TEncoding.UTF8.GetBytes(OriginalText);
+
+    EncUtil.Encrypt(OriginalBytes, EncryptedBytes);
+    Assert.IsTrue(Length(EncryptedBytes) > 0, 'Encrypted bytes array is empty');
+
+    EncUtil.Decrypt(EncryptedBytes, DecryptedBytes);
+    DecryptedText := TEncoding.UTF8.GetString(DecryptedBytes);
+    Assert.AreEqual(OriginalText, DecryptedText);
   finally
     EncUtil.Free;
   end;
