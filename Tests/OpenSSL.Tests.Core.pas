@@ -296,6 +296,9 @@ end;
 { EVP_GetKeyIV tests }
 
 procedure TOpenSSLCoreTest.TestEVP_GetKeyIVWithStringPassword;
+const
+  AES_256_KEY_LEN = 32;
+  AES_256_CBC_IV_LEN = 16;
 var
   Password: string;
   Salt: TBytes;
@@ -309,11 +312,14 @@ begin
 
   EVP_GetKeyIV(Password, Cipher, Salt, Key, IV);
 
-  Assert.AreEqual(EVP_MAX_KEY_LENGTH, Length(Key), 'Key length incorrect');
-  Assert.AreEqual(EVP_MAX_IV_LENGTH, Length(IV), 'IV length incorrect');
+  Assert.AreEqual(AES_256_KEY_LEN, Length(Key), 'Key length incorrect');
+  Assert.AreEqual(AES_256_CBC_IV_LEN, Length(IV), 'IV length incorrect');
 end;
 
 procedure TOpenSSLCoreTest.TestEVP_GetKeyIVWithBytesPassword;
+const
+  AES_256_KEY_LEN = 32;
+  AES_256_CBC_IV_LEN = 16;
 var
   Password: string;
   PasswordBytes: TBytes;
@@ -329,8 +335,8 @@ begin
 
   EVP_GetKeyIV(PasswordBytes, Cipher, Salt, Key, IV);
 
-  Assert.AreEqual(EVP_MAX_KEY_LENGTH, Length(Key), 'Key length incorrect (TBytes overload)');
-  Assert.AreEqual(EVP_MAX_IV_LENGTH, Length(IV), 'IV length incorrect (TBytes overload)');
+  Assert.AreEqual(AES_256_KEY_LEN, Length(Key), 'Key length incorrect (TBytes overload)');
+  Assert.AreEqual(AES_256_CBC_IV_LEN, Length(IV), 'IV length incorrect (TBytes overload)');
 end;
 
 procedure TOpenSSLCoreTest.TestEVP_GetKeyIVDifferentPasswords;

@@ -128,8 +128,8 @@ var
   BuffStart :Integer;
   InputStart :Integer;
 
-  KeyPtr: PAnsiChar;
-  IVPtr: PAnsiChar;
+  KeyPtr: PByte;
+  IVPtr: PByte;
 begin
   if Assigned(FCipherProc) then
     Cipher := FCipherProc()
@@ -180,12 +180,12 @@ begin
     RaiseOpenSSLError('Cannot initialize context');
 
   try
-    KeyPtr := PAnsiChar(@Key[0]);
+    KeyPtr := PByte(@Key[0]);
     if EVP_CIPHER_iv_length(Cipher) > 0 then
     begin
       if Length(InitVector) <> EVP_CIPHER_iv_length(Cipher) then
         RaiseOpenSSLError('Invalid IV length for cipher');
-      IVPtr := PAnsiChar(@InitVector[0]);
+      IVPtr := PByte(@InitVector[0]);
     end
     else
       IVPtr := nil;
@@ -227,8 +227,8 @@ var
   BlockSize :Integer;
   BuffStart :Integer;
 
-  KeyPtr: PAnsiChar;
-  IVPtr: PAnsiChar;
+  KeyPtr: PByte;
+  IVPtr: PByte;
 begin
   BuffStart := 0;
   SetLength(Salt, 0);
@@ -259,12 +259,12 @@ begin
     RaiseOpenSSLError('Cannot initialize context');
 
   try
-    KeyPtr := PAnsiChar(@Key[0]);
+    KeyPtr := PByte(@Key[0]);
     if EVP_CIPHER_iv_length(Cipher) > 0 then
     begin
       if Length(InitVector) <> EVP_CIPHER_iv_length(Cipher) then
         RaiseOpenSSLError('Invalid IV length for cipher');
-      IVPtr := PAnsiChar(@InitVector[0]);
+      IVPtr := PByte(@InitVector[0]);
     end
     else
       IVPtr := nil;

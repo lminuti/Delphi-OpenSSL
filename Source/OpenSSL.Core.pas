@@ -161,6 +161,8 @@ function EVP_DecryptFinal(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integ
 function EVP_DecryptFinal_ex(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer;
 function EVP_EncryptUpdate(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer; _in : PByte; inl : integer): integer;
 function EVP_EncryptFinal_ex(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer) : integer;
+function EVP_DecryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
+function EVP_EncryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
 
 function LoadOpenSSLLibrary: boolean;
 procedure UnLoadOpenSSLLibrary;
@@ -309,6 +311,24 @@ begin
   {$ENDIF}
 end;
 
+function EVP_EncryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_EncryptInit_ex(ctx, cipher, impl, PAnsiChar(key), PAnsiChar(iv));
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_EncryptInit_ex(ctx, cipher, impl, key, iv);
+  {$ENDIF}
+end;
+
+function EVP_DecryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_DecryptInit_ex(ctx, cipher, impl, PAnsiChar(key), PAnsiChar(iv));
+  {$ELSE}
+  Result := TaurusTLSHeaders_evp.EVP_DecryptInit_ex(ctx, cipher, impl, key, iv);
+  {$ENDIF}
+end;
+
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   Result := BIO_ctrl(b,BIO_CTRL_INFO,0,pp);
@@ -398,8 +418,13 @@ procedure EVP_GetKeyIV(APassword: TBytes; ACipher: PEVP_CIPHER; const ASalt: TBy
 var
   IVLen, KeyLen: Integer;
 begin
+  {$IFDEF USE_TAURUS_TLS}
+  KeyLen := EVP_CIPHER_key_length(ACipher);
+  IVLen  := EVP_CIPHER_iv_length(ACipher);
+  {$ELSE}
   KeyLen := ACipher^.key_len;
   IVLen  := ACipher^.iv_len;
+  {$ENDIF}
   SetLength(Key, KeyLen);
   SetLength(IV, IVLen);
   if IVLen > 0 then
