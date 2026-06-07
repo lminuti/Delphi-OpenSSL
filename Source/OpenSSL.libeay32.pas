@@ -276,11 +276,18 @@ SN_commonName = 'CN';
 
 var
   X509_get_pubkey : function (a: pX509): pEVP_PKEY; cdecl;
+  // The Indy header shipped with some Delphi versions wrongly declares X509_new
+  // as returning PPX509; the real prototype returns PX509.
+  X509_new : function: PX509; cdecl;
 
   EVP_BytesToKey : function (cipher_type: PEVP_CIPHER; md: PEVP_MD; salt: PByte; data: PByte; datal: integer; count: integer; key: PByte; iv: PByte): integer; cdecl;
   EVP_DecryptUpdate : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer; cdecl;
   EVP_DecryptFinal : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer; cdecl;
   EVP_DecryptFinal_ex : function(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer cdecl = nil;
+  EVP_EncryptUpdate : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer; cdecl;
+  EVP_EncryptFinal_ex : function (ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer; cdecl;
+  EVP_MD_CTX_create : function: PEVP_MD_CTX; cdecl;
+  EVP_MD_CTX_destroy : procedure (ctx: PEVP_MD_CTX); cdecl;
 
   BIO_free_all : procedure (a: pBIO); cdecl;
   BIO_push : function (b :pBIO; append :pBIO) :pBIO; cdecl;
@@ -314,6 +321,8 @@ var
 
   BN_num_bits: function (a: PBIGNUM): Integer; cdecl;
   BN_bn2bin : function (a: PBIGNUM; &to: PByte): Integer; cdecl;
+
+  ASN1_INTEGER_to_BN : function (ai: PASN1_INTEGER; bn: PBIGNUM): PBIGNUM; cdecl;
 
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
@@ -374,6 +383,7 @@ procedure ResetFuncPointers;
 begin
   hSSL := 0;
   X509_get_pubkey := nil;
+  X509_new := nil;
   BIO_free_all := nil;
   PEM_read_bio_PUBKEY := nil;
   PEM_write_bio_PUBKEY := nil;
@@ -381,6 +391,11 @@ begin
   EVP_DecryptUpdate := nil;
   EVP_DecryptFinal := nil;
   EVP_DecryptFinal_ex := nil;
+  EVP_EncryptUpdate := nil;
+  EVP_EncryptFinal_ex := nil;
+  EVP_MD_CTX_create := nil;
+  EVP_MD_CTX_destroy := nil;
+  ASN1_INTEGER_to_BN := nil;
   BIO_push := nil;
   BIO_pop := nil;
   BIO_set_next := nil;
@@ -420,6 +435,7 @@ begin
     if hSSL = 0 then
       Exit(False);
     X509_get_pubkey := GetProcAddress(hSSL, 'X509_get_pubkey');
+    X509_new := GetProcAddress(hSSL, 'X509_new');
     BIO_free_all := GetProcAddress(hSSL, 'BIO_free_all');
     PEM_read_bio_PUBKEY := GetProcAddress(hSSL, 'PEM_read_bio_PUBKEY');
     PEM_write_bio_PUBKEY := GetProcAddress(hSSL, 'PEM_write_bio_PUBKEY');
@@ -427,6 +443,11 @@ begin
     EVP_DecryptUpdate := GetProcAddress(hSSL, 'EVP_DecryptUpdate');
     EVP_DecryptFinal := GetProcAddress(hSSL, 'EVP_DecryptFinal');
     EVP_DecryptFinal_ex := GetProcAddress(hSSL, 'EVP_DecryptFinal_ex');
+    EVP_EncryptUpdate := GetProcAddress(hSSL, 'EVP_EncryptUpdate');
+    EVP_EncryptFinal_ex := GetProcAddress(hSSL, 'EVP_EncryptFinal_ex');
+    EVP_MD_CTX_create := GetProcAddress(hSSL, 'EVP_MD_CTX_create');
+    EVP_MD_CTX_destroy := GetProcAddress(hSSL, 'EVP_MD_CTX_destroy');
+    ASN1_INTEGER_to_BN := GetProcAddress(hSSL, 'ASN1_INTEGER_to_BN');
     BIO_push := GetProcAddress(hSSL, 'BIO_push');
     BIO_pop := GetProcAddress(hSSL, 'BIO_pop');
     BIO_set_next := GetProcAddress(hSSL, 'BIO_set_next');

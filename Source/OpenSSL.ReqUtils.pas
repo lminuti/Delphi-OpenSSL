@@ -28,6 +28,7 @@ interface
 uses
   System.Classes, System.SysUtils,
   {$IFNDEF USE_TAURUS_TLS}
+  Winapi.Windows,
   OpenSSL.libeay32, IdSSLOpenSSLHeaders,
   {$ELSE}
   TaurusTLSHeaders_types, TaurusTLSHeaders_x509, TaurusTLSHeaders_asn1,
@@ -195,7 +196,13 @@ begin
   end;
 
   // Create X509 structure
+  {$IFNDEF USE_TAURUS_TLS}
+  // Use the OpenSSL.libeay32 binding: its prototype correctly returns PX509,
+  // unlike the Indy header shipped with some Delphi versions (which returns PPX509).
+  FX509 := OpenSSL.libeay32.X509_new();
+  {$ELSE}
   FX509 := X509_new();
+  {$ENDIF}
   if FX509 = nil then
     RaiseOpenSSLError('Failed to create X509 structure');
 
@@ -205,7 +212,13 @@ begin
       RaiseOpenSSLError('Failed to set X509 version');
 
     // Set serial number (using timestamp for uniqueness)
+    {$IFNDEF USE_TAURUS_TLS}
+    // TThread.GetTickCount64 is not available on older Delphi versions; use the
+    // Win32 API directly on the Indy/libeay32 path (Windows only).
+    if ASN1_INTEGER_set(X509_get_serialNumber(FX509), Winapi.Windows.GetTickCount) = 0 then
+    {$ELSE}
     if ASN1_INTEGER_set(X509_get_serialNumber(FX509), TThread.GetTickCount64) = 0 then
+    {$ENDIF}
       RaiseOpenSSLError('Failed to set serial number');
 
     // Set validity period

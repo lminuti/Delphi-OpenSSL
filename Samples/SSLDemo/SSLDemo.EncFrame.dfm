@@ -23,7 +23,7 @@ object EncFrame: TEncFrame
   object Label2: TLabel
     Left = 3
     Top = 197
-    Width = 371
+    Width = 74
     Height = 20
     Anchors = [akLeft, akTop, akRight]
     Caption = 'Output file:'
@@ -54,7 +54,6 @@ object EncFrame: TEncFrame
     Lines.Strings = (
       'Hello, world!')
     TabOrder = 1
-    ExplicitWidth = 382
   end
   object btnDecrypt: TButton
     Left = 151
@@ -111,5 +110,6 @@ object EncFrame: TEncFrame
     Height = 28
     Anchors = [akLeft, akTop, akRight]
     TabOrder = 7
+    Text = 'AES-256'
   end
 end

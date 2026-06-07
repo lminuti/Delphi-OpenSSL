@@ -137,9 +137,13 @@ function BIO_read(b: PBIO; var OutputBuffer :TBytes): Integer;
 function BIO_get_mem_data(b : PBIO; pp : Pointer) : Integer;
 function BIO_new_mem_buf(InputBuffer :TBytes): PBIO;
 
+// Provided for both backends: the Indy header bundled with some Delphi versions
+// declares BIO_get_md_ctx with a by-value parameter, which leaves the caller's
+// EVP_MD_CTX pointer uninitialized (it must receive the context by reference).
+function BIO_get_md_ctx(b : PBIO; var mdcp : PEVP_MD_CTX) : LongInt;
+
 {$IFDEF USE_TAURUS_TLS}
 function BIO_flush(b : PBIO) : TIdC_INT;
-function BIO_get_md_ctx(b : PBIO; var mdcp : PEVP_MD_CTX) : TIdC_LONG;
 function BIO_to_string(b : PBIO; Encoding: TEncoding): string; overload;
 function BIO_to_string(b : PBIO): string; overload;
 function BIO_pending(b : PBIO) : TIdC_INT;
@@ -187,15 +191,15 @@ begin
   {$ENDIF}
 end;
 
+function BIO_get_md_ctx(b : PBIO; var mdcp : PEVP_MD_CTX) : LongInt; {$IFDEF USE_INLINE} inline; {$ENDIF}
+begin
+  Result := BIO_ctrl(b,BIO_C_GET_MD_CTX,0,@mdcp);
+end;
+
 {$IFDEF USE_TAURUS_TLS}
 function BIO_flush(b : PBIO) : TIdC_INT; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   Result := BIO_ctrl(b,BIO_CTRL_FLUSH,0,nil);
-end;
-
-function BIO_get_md_ctx(b : PBIO; var mdcp : PEVP_MD_CTX) : TIdC_LONG; {$IFDEF USE_INLINE} inline; {$ENDIF}
-begin
-  Result := BIO_ctrl(b,BIO_C_GET_MD_CTX,0,@mdcp);
 end;
 
 function EVP_MD_CTX_create : PEVP_MD_CTX; {$IFDEF USE_INLINE} inline; {$ENDIF}
@@ -269,7 +273,9 @@ end;
 function EVP_DecryptUpdate(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer; data_in: PByte; inl: integer): integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   {$IFNDEF USE_TAURUS_TLS}
-  Result := IdSSLOpenSSLHeaders.EVP_DecryptUpdate(ctx, PAnsiChar(data_out), @outl, PAnsiChar(data_in), inl);
+  // Use the OpenSSL.libeay32 binding: its prototype correctly declares "outl" as
+  // "var" (a pointer), unlike the Indy header shipped with some Delphi versions.
+  Result := OpenSSL.libeay32.EVP_DecryptUpdate(ctx, data_out, outl, data_in, inl);
   {$ELSE}
   Result := TaurusTLSHeaders_evp.EVP_DecryptUpdate(ctx, data_out[0], outl, data_in^, inl);
   {$ENDIF}
@@ -278,7 +284,7 @@ end;
 function EVP_DecryptFinal(ctx: PEVP_CIPHER_CTX; data_out: PByte; var outl: integer): integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   {$IFNDEF USE_TAURUS_TLS}
-  Result := IdSSLOpenSSLHeaders.EVP_DecryptFinal(ctx, PAnsiChar(data_out), @outl);
+  Result := OpenSSL.libeay32.EVP_DecryptFinal(ctx, data_out, outl);
   {$ELSE}
   Result := TaurusTLSHeaders_evp.EVP_DecryptFinal(ctx, data_out, outl);
   {$ENDIF}
@@ -287,7 +293,7 @@ end;
 function EVP_DecryptFinal_ex(ctx : PEVP_CIPHER_CTX; outm: PByte; var outl : integer) : integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   {$IFNDEF USE_TAURUS_TLS}
-  Result := IdSSLOpenSSLHeaders.EVP_DecryptFinal_ex(ctx, PAnsiChar(outm), @outl);
+  Result := OpenSSL.libeay32.EVP_DecryptFinal_ex(ctx, outm, outl);
   {$ELSE}
   Result := TaurusTLSHeaders_evp.EVP_DecryptFinal_ex(PEVP_MD_CTX(ctx), outm^, outl);
   {$ENDIF}
@@ -296,7 +302,7 @@ end;
 function EVP_EncryptUpdate(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer; _in : PByte; inl : integer): integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   {$IFNDEF USE_TAURUS_TLS}
-  Result := IdSSLOpenSSLHeaders.EVP_EncryptUpdate(ctx, PAnsiChar(_out), @outl, PAnsiChar(_in), inl);
+  Result := OpenSSL.libeay32.EVP_EncryptUpdate(ctx, _out, outl, _in, inl);
   {$ELSE}
   Result := TaurusTLSHeaders_evp.EVP_EncryptUpdate(ctx, _out[0], outl, _in^, inl);
   {$ENDIF}
@@ -305,7 +311,7 @@ end;
 function EVP_EncryptFinal_ex(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer) : integer; {$IFDEF USE_INLINE} inline; {$ENDIF}
 begin
   {$IFNDEF USE_TAURUS_TLS}
-  Result := IdSSLOpenSSLHeaders.EVP_EncryptFinal_ex(ctx, PAnsiChar(_out), @outl);
+  Result := OpenSSL.libeay32.EVP_EncryptFinal_ex(ctx, _out, outl);
   {$ELSE}
   Result := TaurusTLSHeaders_evp.EVP_EncryptFinal_ex(ctx, _out[0], outl);
   {$ENDIF}
