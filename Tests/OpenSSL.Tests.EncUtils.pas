@@ -47,7 +47,10 @@ type
     [TestCase('AES-192', 'AES-192')]
     [TestCase('AES-256', 'AES-256')]
     [TestCase('DES3', 'DES3')]
+    {$IFNDEF USE_TAURUS_TLS}
+    // Deprecated with OpenSSL 3.0
     [TestCase('BF', 'BF')]
+    {$ENDIF}
     procedure TestEncryptDecryptWithCipher(const CipherName: string);
     [Test]
     procedure TestEmptyInputTBytes;

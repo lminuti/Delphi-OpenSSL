@@ -332,6 +332,8 @@ function BN_num_bytes(a: PBIGNUM): Integer;
 function LoadOpenSSLLibraryEx :Boolean;
 procedure UnLoadOpenSSLLibraryEx;
 
+function OpenSSLVersion: string;
+
 procedure OPENSSL_free(address: pointer);
 
 implementation
@@ -344,7 +346,6 @@ const
 
 var
   hSSL :HMODULE;
-
 
 //function X509_get_pubkey(a: pX509): pEVP_PKEY; cdecl; external LIBEAY_DLL_NAME;
 //
@@ -488,6 +489,11 @@ begin
     FreeLibrary(hSSL);
     ResetFuncPointers;
   end;
+end;
+
+function OpenSSLVersion: string;
+begin
+  Result := IdSSLOpenSSL.OpenSSLVersion;
 end;
 
 initialization

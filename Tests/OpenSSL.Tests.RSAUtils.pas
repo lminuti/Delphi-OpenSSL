@@ -26,7 +26,7 @@ interface
 {$I OpenSSL.inc}
 
 uses
-  System.SysUtils, System.Classes,
+  System.SysUtils, System.Classes, System.IOUtils,
   DUnitX.TestFramework,
 
   OpenSSL.RSAUtils, OpenSSL.Core;
@@ -669,8 +669,8 @@ begin
     RSAUtil.PublicKey.LoadFromStream(FPublicKeyStream);
 
     // Create test files
-    MsgFileName := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'test_message.txt';
-    SignFileName := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + 'test_signature.sig';
+    MsgFileName := TPath.Combine(TPath.GetTempPath, 'test_message.txt');
+    SignFileName := TPath.Combine(TPath.GetTempPath, 'test_signature.sig');
 
     // Write test message to file
     TestMessage := 'Test message for file signing';

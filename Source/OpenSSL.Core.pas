@@ -33,7 +33,8 @@ uses
   TaurusTLSHeaders_types, TaurusTLSHeaders_evp,
   TaurusTLSHeaders_bio, TaurusTLSHeaders_rand,
   TaurusTLSHeaders_bn, TaurusTLSHeaders_x509,
-  TaurusTLSHeaders_err, TaurusTLSLoader;
+  TaurusTLSHeaders_err, TaurusTLSHeaders_crypto,
+  TaurusTLSLoader;
   {$ENDIF}
 
 type
@@ -167,9 +168,15 @@ function EVP_EncryptUpdate(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integ
 function EVP_EncryptFinal_ex(ctx : PEVP_CIPHER_CTX; _out : PByte; var outl : integer) : integer;
 function EVP_DecryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
 function EVP_EncryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
+function EVP_CIPHER_CTX_block_size(const ctx: PEVP_CIPHER_CTX): Integer;
 
 function LoadOpenSSLLibrary: boolean;
 procedure UnLoadOpenSSLLibrary;
+
+function OpenSSLVersion: string;
+
+var
+  SSLLibVersion: string = '';
 
 implementation
 
@@ -178,6 +185,8 @@ begin
   {$IFNDEF USE_TAURUS_TLS}
   Result := OpenSSL.libeay32.LoadOpenSSLLibraryEx;
   {$ELSE}
+  if SSLLibVersion <> '' then
+    GetOpenSSLLoader.SSLLibVersions := SSLLibVersion;
   Result := GetOpenSSLLoader.Load;
   {$ENDIF}
 end;
@@ -188,6 +197,28 @@ begin
   OpenSSL.libeay32.UnLoadOpenSSLLibraryEx;
   {$ELSE}
   GetOpenSSLLoader.Unload;
+  {$ENDIF}
+end;
+
+function OpenSSLVersion: string;
+
+  function ExtractOpenSSLVersionNumber(const FullVersion: string): string;
+  var
+    Parts: TArray<string>;
+  begin
+    // FullVersion tipo: "OpenSSL 3.0.13 30 Jan 2024"
+    Parts := FullVersion.Split([' ']);
+    if Length(Parts) >= 2 then
+      Result := Parts[1]   // -> "3.0.13"
+    else
+      Result := '';
+  end;
+
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := ExtractOpenSSLVersionNumber(OpenSSL.libeay32.OpenSSLVersion);
+  {$ELSE}
+  Result := ExtractOpenSSLVersionNumber(string(OpenSSL_version(0)));
   {$ENDIF}
 end;
 
@@ -325,6 +356,27 @@ begin
   Result := TaurusTLSHeaders_evp.EVP_EncryptInit_ex(ctx, cipher, impl, key, iv);
   {$ENDIF}
 end;
+
+function EVP_CIPHER_CTX_block_size(const ctx: PEVP_CIPHER_CTX): Integer;
+{$IFDEF USE_TAURUS_TLS}
+const
+  OPENSSL_VERSION_3_0_0 = $30000000;
+{$ENDIF}
+begin
+  {$IFNDEF USE_TAURUS_TLS}
+  Result := IdSSLOpenSSLHeaders.EVP_CIPHER_CTX_block_size(ctx);
+  {$ELSE}
+  // EVP_CIPHER_CTX_block_size() was dropped in OpenSSL 3.0, where the block size
+  // must be asked to the cipher itself; EVP_CIPHER_get_block_size() and
+  // EVP_CIPHER_CTX_get0_cipher() in turn do not exist before 3.0
+  if OpenSSL_version_num < OPENSSL_VERSION_3_0_0 then
+    Result := TaurusTLSHeaders_evp.EVP_CIPHER_CTX_block_size(ctx)
+  else
+    Result := TaurusTLSHeaders_evp.EVP_CIPHER_get_block_size(
+      TaurusTLSHeaders_evp.EVP_CIPHER_CTX_get0_cipher(ctx));
+  {$ENDIF}
+end;
+
 
 function EVP_DecryptInit_ex(ctx: PEVP_CIPHER_CTX; const cipher: PEVP_CIPHER; impl: PENGINE; const key: PByte; const iv: PByte): integer;
 begin

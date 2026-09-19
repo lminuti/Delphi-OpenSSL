@@ -33,6 +33,7 @@ uses
   IdSSLOpenSSLHeaders,
   OpenSSL.libeay32,
   {$ELSE}
+  TaurusTLSLoader,
   TaurusTLSHeaders_evp,
   TaurusTLSHeaders_types,
   {$ENDIF}
@@ -45,6 +46,9 @@ type
   public
     [Setup]
     procedure Setup;
+
+    [Test]
+    procedure TestOpenSSLVersion;
 
     // Base64 Encode tests
     [Test]
@@ -116,6 +120,9 @@ type
     [Test]
     procedure TestSerialNumberTryToInt64;
   end;
+
+var
+  OpenSSLVersionAsk: string = '';
 
 implementation
 
@@ -291,6 +298,17 @@ begin
   Salt1 := EVP_GetSalt;
   Salt2 := EVP_GetSalt;
   Assert.AreNotEqual(TEncoding.ASCII.GetString(Salt1), TEncoding.ASCII.GetString(Salt2));
+end;
+
+procedure TOpenSSLCoreTest.TestOpenSSLVersion;
+begin
+  if OpenSSLVersionAsk = '' then
+  begin
+    Assert.Pass;
+    Exit;
+  end;
+
+  Assert.AreEqual(OpenSSLVersionAsk, OpenSSLVersion, 'OpenSSL Version incorrect');
 end;
 
 { EVP_GetKeyIV tests }

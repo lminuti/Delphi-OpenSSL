@@ -38,6 +38,7 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
+  DUnitX.CommandLine.Options,
   OpenSSL.Tests.Core in 'OpenSSL.Tests.Core.pas',
   OpenSSL.Tests.RandUtils in 'OpenSSL.Tests.RandUtils.pas',
   OpenSSL.Tests.RSAUtils in 'OpenSSL.Tests.RSAUtils.pas',
@@ -59,6 +60,20 @@ var
   nunitLogger : ITestLogger;
 begin
   ReportMemoryLeaksOnShutdown := True;
+  TOptionsRegistry.RegisterOption<string>('OPENSSL_VERSION', 'OV',
+    procedure (AValue: string)
+    begin
+      OpenSSLVersionAsk := AValue;
+      if AValue.StartsWith('4.') then
+        SSLLibVersion := '-4'
+      else if AValue.StartsWith('3.') then
+        SSLLibVersion := '-3'
+      else if AValue.StartsWith('1.1.') then
+        SSLLibVersion := '-1_1'
+      else if AValue.StartsWith('1.0.') then
+        SSLLibVersion := '-1';
+    end
+  );
 {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX.RunRegisteredTests;
   Exit;
