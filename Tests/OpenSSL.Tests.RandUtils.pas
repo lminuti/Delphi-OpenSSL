@@ -23,8 +23,6 @@ unit OpenSSL.Tests.RandUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.SysUtils, System.IOUtils,
   DUnitX.TestFramework,
@@ -60,13 +58,13 @@ var
   Bytes: TBytes;
 begin
   Bytes := TRandUtil.GetRandomBytes(16);
-  Assert.AreEqual(16, Length(Bytes), 'GetRandomBytes(16) returned wrong length');
+  Assert.AreEqual(16, Integer(Length(Bytes)), 'GetRandomBytes(16) returned wrong length');
 
   Bytes := TRandUtil.GetRandomBytes(32);
-  Assert.AreEqual(32, Length(Bytes), 'GetRandomBytes(32) returned wrong length');
+  Assert.AreEqual(32, Integer(Length(Bytes)), 'GetRandomBytes(32) returned wrong length');
 
   Bytes := TRandUtil.GetRandomBytes(256);
-  Assert.AreEqual(256, Length(Bytes), 'GetRandomBytes(256) returned wrong length');
+  Assert.AreEqual(256, Integer(Length(Bytes)), 'GetRandomBytes(256) returned wrong length');
 end;
 
 procedure TOpenSSLRandUtilsTest.TestGetPseudoRandomBytesLength;
@@ -74,10 +72,10 @@ var
   Bytes: TBytes;
 begin
   Bytes := TRandUtil.GetPseudoRandomBytes(16);
-  Assert.AreEqual(16, Length(Bytes), 'GetPseudoRandomBytes(16) returned wrong length');
+  Assert.AreEqual(16, Integer(Length(Bytes)), 'GetPseudoRandomBytes(16) returned wrong length');
 
   Bytes := TRandUtil.GetPseudoRandomBytes(32);
-  Assert.AreEqual(32, Length(Bytes), 'GetPseudoRandomBytes(32) returned wrong length');
+  Assert.AreEqual(32, Integer(Length(Bytes)), 'GetPseudoRandomBytes(32) returned wrong length');
 end;
 
 procedure TOpenSSLRandUtilsTest.TestInitializedReturnsBoolean;

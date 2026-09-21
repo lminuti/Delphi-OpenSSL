@@ -18,7 +18,8 @@ A [Delphi](http://www.embarcadero.com/products/delphi) wrapper for [OpenSSL](htt
 - Basic SMIME support
 - Generate RSA KeyPairs in PKCS PEM format
 - Generate self-signed X.509 certificates and Certificate Signing Requests (CSR)
-- Experimental support for newer OpenSSL versions (1.1.1 and 3.x)
+- Support for OpenSSL 1.0.x, 1.1.x, 3.x and 4.x from a single build, with the library selected at runtime
+- No external component dependency (no Indy/TaurusTLS): the OpenSSL C API is bound directly
 
 ## Usage
 
@@ -176,39 +177,37 @@ end;
 
 | Unit | Purpose |
 |------|---------|
+| `OpenSSL.Api.pas` | Low-level OpenSSL C API (types, constants and function prototypes) and the runtime loader for `libcrypto` (`SSLLibVersions`, `OpenSSLPath`, version selection) |
 | `OpenSSL.Core.pas` | Base classes, error handling, `TSubjectInfo`/`TSerialNumber` records, utility functions (Base64, EVP helpers) |
 | `OpenSSL.RSAUtils.pas` | RSA operations: `TRSAUtil`, `TRSAPublicKey`, `TRSAPrivateKey`, `TX509Certificate`, `TRSAKeyPair` |
 | `OpenSSL.EncUtils.pas` | Symmetric encryption: `TEncUtil` with cipher support (AES, etc.) |
 | `OpenSSL.RandUtils.pas` | Random number generation: `TRandUtil` |
 | `OpenSSL.ReqUtils.pas` | Certificate/CSR generation: `TReqUtil` |
 | `OpenSSL.SMIMEUtils.pas` | S/MIME support: `TSMIMEUtil` |
-| `OpenSSL.libeay32.pas` | Low-level OpenSSL DLL bindings (used when not using TaurusTLS) |
 
 ## Prerequisite
 
 ### Installing OpenSSL
 
-If your application requires OpenSSL support, you must have the necessary library files in your file system before deploying your application.
+The library only loads the `libcrypto` shared library, selected at runtime. You must have the matching file for the OpenSSL version you want to use available on your file system (or point the loader at it).
 
-| Platform | Download Required | File Names | Static/Dynamic Linking |
-|----------|------------------|------------|----------------------|
-| Windows (32-bit and 64-bit) | Yes | libeay32.dll and ssleay32.dll | Dynamic |
-| iOS Device | Yes | libcrypto.a and libssl.a | Static |
-| Android Device | No | | Dynamic |
+| OpenSSL | Windows | Linux |
+|---------|---------|-------|
+| 4.x | `libcrypto-4.dll` | `libcrypto.so.4` |
+| 3.x | `libcrypto-3.dll` | `libcrypto.so.3` |
+| 1.1.x | `libcrypto-1_1.dll` | `libcrypto.so.1.1` |
+| 1.0.x | `libeay32.dll` | `libcrypto.so.1.0.0` |
 
-Review the requirements below depending on the platform that you are using:
+`libssl` is not required.
+
+On 64-bit Windows the library files use the `-x64` suffix (`libcrypto-4-x64.dll`, `libcrypto-3-x64.dll`, `libcrypto-1_1-x64.dll`); the loader picks the right names based on the target platform. OpenSSL 1.0.x on Windows is `libeay32.dll` for both 32- and 64-bit.
 
 #### 32-bit and 64-bit Windows
 
-To install OpenSSL on 32-bit or 64-bit Windows, you need to copy the **libeay32.dll** and **ssleay32.dll** dynamic library files to your file system; you can download them from one of these locations:
+Copy the `libcrypto` file for the target OpenSSL version to your application folder, to a directory on the `PATH`, or to the directory configured through `OpenSSLPath` (see below). Builds are available from:
 
 - **Option 1** - Download the [OpenSSL installer files](http://slproweb.com/products/Win32OpenSSL.html) and install them.
-- **Option 2** - Download the [OpenSSL compressed library files](https://github.com/IndySockets/OpenSSL-Binaries) and copy the libeay32.dll and ssleay32.dll files to your system path.
-
-If you go for Option 2 and decide to copy libeay32.dll and ssleay32.dll files to your system path, ensure you copy them to the right location:
-
-- **32-bit Windows**: You must copy the libeay32.dll and ssleay32.dll 32-bit files to your Windows system folder (System32 folder).
-- **64-bit Windows**: You must copy the libeay32.dll and ssleay32.dll 64-bit files to your Windows system folder for 64-bit files (System32) and the libeay32.dll and ssleay32.dll 32-bit files to your Windows 32-bit files folder (SysWOW64 folder).
+- **Option 2** - Download the [OpenSSL compressed library files](https://github.com/IndySockets/OpenSSL-Binaries) and copy the `libcrypto` file to your system path.
 
 So when working with a 64-bit Windows, remember:
 - **System32 folder** is for 64-bit files only.
@@ -219,24 +218,27 @@ So when working with a 64-bit Windows, remember:
 - Add the source path "Source" to your Delphi project path
 - Run the demo and follow the tutorial
 
-## TaurusTLS Support (Experimental)
+## Selecting the OpenSSL version
 
-Experimental support for newer OpenSSL versions (1.1.1 and 3.x) has been added through [TaurusTLS](https://github.com/TaurusTLS-Developers/TaurusTLS).
+A single build supports OpenSSL 1.0.x, 1.1.x, 3.x and 4.x. The loader (`OpenSSL.Api.pas`) tries the entries of `SSLLibVersions` in order and loads the first library found; the OpenSSL version is then detected at runtime and the matching entry points are used. No `libssl` DLL is needed.
 
-### Enabling TaurusTLS
+```delphi
+uses
+  OpenSSL.Core, OpenSSL.Api;
 
-To enable TaurusTLS support, uncomment the `USE_TAURUS_TLS` directive in the `Source/OpenSSL.inc` file:
+// Choose a specific library (or a fallback list) on the loader singleton
+GetOpenSSLLoader.SSLLibVersions := 'libcrypto-1_1';   // try only this one (Windows)
+// GetOpenSSLLoader.SSLLibVersions := 'libcrypto-3;libcrypto-1_1;libeay32';
 
-```pascal
-{$DEFINE USE_TAURUS_TLS}
-{$DEFINE USE_INLINE}
+// or pass the list directly when loading (overrides the loader setting)
+if not LoadOpenSSLLibrary('libcrypto-3') then
+  raise EOpenSSLError.Create('Cannot open OpenSSL');
+
+// Optional: directory where the library is searched
+GetOpenSSLLoader.OpenSSLPath := 'C:\OpenSSL\bin';
 ```
 
-### Requirements
-
-- [TaurusTLS](https://github.com/TaurusTLS-Developers/TaurusTLS) must be installed in your Delphi environment
-- The appropriate OpenSSL DLLs must be available on your system
-
-Refer to the [TaurusTLS documentation](https://github.com/TaurusTLS-Developers/TaurusTLS) for instructions on how to obtain and install the required OpenSSL libraries.
-
-> **Note:** This feature is experimental. Please report any issues you encounter.
+- `LoadOpenSSLLibrary(const ASSLLibVersions: string = '')` accepts an optional list of library names; when non-empty it overrides the loader setting for that call. When omitted (or empty), the loader keeps its current `SSLLibVersions` (default list unless changed).
+- `SSLLibVersions` is a `;`-separated list of library file names. Defaults: Windows 32-bit `libcrypto-4;libcrypto-3;libcrypto-1_1;libeay32`, Windows 64-bit `libcrypto-4-x64;libcrypto-3-x64;libcrypto-1_1-x64;libeay32`, Linux `libcrypto.so.4;libcrypto.so.3;libcrypto.so.1.1;libcrypto.so.1.0.0`.
+- `OpenSSLPath` (or the `OPENSSL_LIBRARY_PATH` environment variable) sets the search directory; empty means the system search path.
+- Symbols that are not available in the loaded version stay `nil` and are listed in `GetOpenSSLLoader.FailedToLoad`; legacy ciphers removed from OpenSSL 3.x/4.x are simply not registered.

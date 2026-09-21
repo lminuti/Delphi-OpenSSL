@@ -23,8 +23,6 @@ unit OpenSSL.Tests.RSAUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.SysUtils, System.Classes, System.IOUtils,
   DUnitX.TestFramework,

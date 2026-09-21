@@ -1,4 +1,4 @@
-﻿{******************************************************************************}
+{******************************************************************************}
 {                                                                              }
 {  Delphi OPENSSL Library                                                      }
 {  Copyright (c) Luca Minuti                                                   }
@@ -23,21 +23,11 @@ unit OpenSSL.Tests.Core;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.SysUtils,
   DUnitX.TestFramework,
 
-  {$IFNDEF USE_TAURUS_TLS}
-  IdSSLOpenSSLHeaders,
-  OpenSSL.libeay32,
-  {$ELSE}
-  TaurusTLSLoader,
-  TaurusTLSHeaders_evp,
-  TaurusTLSHeaders_types,
-  {$ENDIF}
-
+  OpenSSL.Api,
   OpenSSL.Core;
 
 type
@@ -155,7 +145,7 @@ var
 begin
   SetLength(Input, 0);
   Output := Base64Encode(Input);
-  Assert.AreEqual(0, Length(Output));
+  Assert.AreEqual(0, Integer(Length(Output)));
 end;
 
 procedure TOpenSSLCoreTest.TestBase64EncodeSingleChar;
@@ -180,7 +170,7 @@ begin
   Input[1] := $FF;
   Input[2] := $7F;
   Output := Base64Encode(Input);
-  Assert.IsTrue(Length(Output) > 0);
+  Assert.IsTrue(Integer(Length(Output)) > 0);
 end;
 
 { Base64 Decode tests }
@@ -204,7 +194,7 @@ var
 begin
   SetLength(Input, 0);
   Output := Base64Decode(Input);
-  Assert.AreEqual(0, Length(Output));
+  Assert.AreEqual(0, Integer(Length(Output)));
 end;
 
 procedure TOpenSSLCoreTest.TestBase64DecodeSingleChar;
@@ -245,7 +235,7 @@ begin
     Original[i] := Byte(i);
   Encoded := Base64Encode(Original);
   Decoded := Base64Decode(Encoded);
-  Assert.AreEqual(Length(Original), Length(Decoded), 'Decoded length does not match original');
+  Assert.AreEqual(Integer(Length(Original)), Integer(Length(Decoded)), 'Decoded length does not match original');
   for i := 0 to 255 do
     Assert.AreEqual(Original[i], Decoded[i], Format('Byte mismatch at position %d', [i]));
 end;
@@ -271,7 +261,7 @@ var
   Salt: TBytes;
 begin
   Salt := EVP_GetSalt;
-  Assert.AreEqual(PKCS5_SALT_LEN, Length(Salt));
+  Assert.AreEqual(PKCS5_SALT_LEN, Integer(Length(Salt)));
 end;
 
 procedure TOpenSSLCoreTest.TestEVP_GetSaltNotAllZeros;
@@ -282,7 +272,7 @@ var
 begin
   Salt := EVP_GetSalt;
   AllZeros := True;
-  for i := 0 to Length(Salt) - 1 do
+  for i := 0 to Integer(Length(Salt)) - 1 do
     if Salt[i] <> 0 then
     begin
       AllZeros := False;
@@ -330,8 +320,8 @@ begin
 
   EVP_GetKeyIV(Password, Cipher, Salt, Key, IV);
 
-  Assert.AreEqual(AES_256_KEY_LEN, Length(Key), 'Key length incorrect');
-  Assert.AreEqual(AES_256_CBC_IV_LEN, Length(IV), 'IV length incorrect');
+  Assert.AreEqual(AES_256_KEY_LEN, Integer(Length(Key)), 'Key length incorrect');
+  Assert.AreEqual(AES_256_CBC_IV_LEN, Integer(Length(IV)), 'IV length incorrect');
 end;
 
 procedure TOpenSSLCoreTest.TestEVP_GetKeyIVWithBytesPassword;
@@ -353,8 +343,8 @@ begin
 
   EVP_GetKeyIV(PasswordBytes, Cipher, Salt, Key, IV);
 
-  Assert.AreEqual(AES_256_KEY_LEN, Length(Key), 'Key length incorrect (TBytes overload)');
-  Assert.AreEqual(AES_256_CBC_IV_LEN, Length(IV), 'IV length incorrect (TBytes overload)');
+  Assert.AreEqual(AES_256_KEY_LEN, Integer(Length(Key)), 'Key length incorrect (TBytes overload)');
+  Assert.AreEqual(AES_256_CBC_IV_LEN, Integer(Length(IV)), 'IV length incorrect (TBytes overload)');
 end;
 
 procedure TOpenSSLCoreTest.TestEVP_GetKeyIVDifferentPasswords;
@@ -463,7 +453,7 @@ begin
   Serial := Value;
 
   Assert.IsFalse(Serial.IsEmpty, 'Serial number should not be empty');
-  Assert.IsTrue(Length(Serial.Data) > 0, 'Serial data should not be empty');
+  Assert.IsTrue(Integer(Length(Serial.Data)) > 0, 'Serial data should not be empty');
 end;
 
 procedure TOpenSSLCoreTest.TestSerialNumberToInt64;
@@ -487,7 +477,7 @@ begin
   Serial := HexStr;
 
   Assert.IsFalse(Serial.IsEmpty, 'Serial should not be empty');
-  Assert.AreEqual(6, Length(Serial.Data), 'Should parse 6 bytes');
+  Assert.AreEqual(6, Integer(Length(Serial.Data)), 'Should parse 6 bytes');
 end;
 
 procedure TOpenSSLCoreTest.TestSerialNumberToHexString;
@@ -521,7 +511,7 @@ begin
   Serial := Bytes;
 
   Assert.IsFalse(Serial.IsEmpty);
-  Assert.AreEqual(4, Length(Serial.Data));
+  Assert.AreEqual(4, Integer(Length(Serial.Data)));
   Assert.AreEqual(Byte($DE), Serial.Data[0]);
   Assert.AreEqual(Byte($EF), Serial.Data[3]);
 end;

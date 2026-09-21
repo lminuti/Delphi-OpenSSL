@@ -21,23 +21,13 @@
 {******************************************************************************}
 unit OpenSSL.RSAUtils;
 
-{$I OpenSSL.inc}
-
 interface
 
 uses
   System.Classes, System.SysUtils, System.StrUtils, System.DateUtils,
   System.AnsiStrings,
 
-  {$IFNDEF USE_TAURUS_TLS}
-  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
-  {$ELSE}
-  TaurusTLSHeaders_types, TaurusTLSHeaders_evp, TaurusTLSHeaders_bio,
-  TaurusTLSHeaders_rsa, TaurusTLSHeaders_x509, TaurusTLSHeaders_pem,
-  TaurusTLSHeaders_obj_mac, TaurusTLSHeaders_asn1, TaurusTLSHeaders_bn,
-  {$ENDIF}
-
-  OpenSSL.Core;
+  OpenSSL.Api, OpenSSL.Core;
 
 type
   TX509Certificate = class;
@@ -409,7 +399,7 @@ begin
   try
     EVP_PKEY_set1_RSA(locKey, PrivateKey.GetRSA);
 
-    locCtx := EVP_MD_CTX_create;
+    locCtx := EVP_MD_CTX_create();
     try
       locSHA256 := EVP_sha256();
 
@@ -418,11 +408,7 @@ begin
       EVP_DigestSignFinal(locCtx, NIL, @locSize);
 
       SetLength(OutputBuffer, locSize);
-      {$IFNDEF USE_TAURUS_TLS}
-      EVP_DigestSignFinal(locCtx, PAnsiChar(@OutputBuffer[0]), @locSize);
-      {$ELSE}
       EVP_DigestSignFinal(locCtx, @OutputBuffer[0], @locSize);
-      {$ENDIF}
       SignStream.Write(OutputBuffer[0], locSize);
     finally
       EVP_MD_CTX_destroy(locCtx);
@@ -434,7 +420,6 @@ end;
 
 function TRSAUtil.Verify(MsgStream, SignStream: TStream): Boolean;
 var
-  locBio    : pBIO;
   locCtx    : pEVP_MD_CTX;
   locSHA256 : pEVP_MD;
   locKey    : pEVP_PKEY;
@@ -454,21 +439,16 @@ begin
   try
     EVP_PKEY_set1_RSA(locKey, PublicKey.GetRSA);
 
-    locBio := BIO_new( BIO_f_md );
+    locCtx := EVP_MD_CTX_create();
     try
-      BIO_get_md_ctx( locBio, locCtx);
       locSHA256 := EVP_sha256();
 
       EVP_DigestVerifyInit( locCtx, NIL, locSHA256, NIL, locKey);
       EVP_DigestVerifyUpdate( locCtx, PAnsiChar(@MsgBuffer[0]), MsgStream.Size);
 
-      {$IFNDEF USE_TAURUS_TLS}
-      result := EVP_DigestVerifyFinal(locCtx, PAnsiChar(@SignBuffer[0]), SignStream.Size) = 1;
-      {$ELSE}
-      result := EVP_DigestVerifyFinal(locCtx, @SignBuffer[0], SignStream.Size) = 1;
-      {$ENDIF}
+      result := EVP_DigestVerifyFinal(locCtx, @SignBuffer[0], NativeUInt(SignStream.Size)) = 1;
     finally
-      BIO_free( locBio );
+      EVP_MD_CTX_destroy( locCtx );
     end;
 
   finally
@@ -635,11 +615,7 @@ begin
   Bio := BIO_new(BIO_s_mem());
   try
     ASN1_TIME_print(Bio, ASN1Time);
-    {$IFNDEF USE_TAURUS_TLS}
-    Len := IdSSLOpenSSLHeaders.BIO_read(Bio, @Buffer[0], SizeOf(Buffer) - 1);
-    {$ELSE}
-    Len := TaurusTLSHeaders_bio.BIO_read(Bio, Buffer[0], SizeOf(Buffer) - 1);
-    {$ENDIF}
+    Len := BIO_read_raw(Bio, @Buffer[0], SizeOf(Buffer) - 1);
     if Len > 0 then
     begin
       Buffer[Len] := #0;
@@ -889,7 +865,7 @@ var
   Buffer: TBytes;
   pKey: pEVP_PKEY;
 begin
-  PrivateKey := BIO_new(BIO_s_mem);
+  PrivateKey := BIO_new(BIO_s_mem());
   try
     case AFormat of
       kpDefault: begin
@@ -993,7 +969,7 @@ var
   Buffer: TBytes;
   pKey: pEVP_PKEY;
 begin
-  PublicKey := BIO_new(BIO_s_mem);
+  PublicKey := BIO_new(BIO_s_mem());
   try
 
     case AFormat of
@@ -1061,7 +1037,7 @@ begin
   try
     if BN_set_word(Bignum, RSA_F4) = 1 then
     begin
-      FRSA := RSA_new;
+      FRSA := RSA_new();
       try
         if BN_set_word(Bignum, RSA_F4) = 0 then
           RaiseOpenSSLError('BN_set_word');
@@ -1116,7 +1092,7 @@ end;
 procedure TRSAPrivateKey.LoadFromStream(AStream: TStream; AFormat: TPrivateKeyFormat = kpDefault);
 var
   KeyBuffer :pBIO;
-  cb : {$IFNDEF USE_TAURUS_TLS}ppem_password_cb{$ELSE}pem_password_cb{$ENDIF};
+  cb : TPEMPasswordCallback;
   pKey : PEVP_PKEY;
 begin
   cb := nil;

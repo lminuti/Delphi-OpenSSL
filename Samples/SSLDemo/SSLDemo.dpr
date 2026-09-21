@@ -28,7 +28,7 @@ uses
   SSLDemo.EncFrame in 'SSLDemo.EncFrame.pas' {EncFrame: TFrame},
   OpenSSL.Core in '..\..\Source\OpenSSL.Core.pas',
   OpenSSL.EncUtils in '..\..\Source\OpenSSL.EncUtils.pas',
-  OpenSSL.libeay32 in '..\..\Source\OpenSSL.libeay32.pas',
+  OpenSSL.Api in '..\..\Source\OpenSSL.Api.pas',
   OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas',
   SSLDemo.RandFrame in 'SSLDemo.RandFrame.pas' {RandomFrame: TFrame},
   SSLDemo.UnpackPKCS7Frame in 'SSLDemo.UnpackPKCS7Frame.pas' {UnpackPKCS7Frame: TFrame},

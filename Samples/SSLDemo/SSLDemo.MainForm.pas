@@ -31,6 +31,7 @@ uses
 type
   TMainForm = class(TForm)
     pgcMain: TPageControl;
+    StatusBar1: TStatusBar;
     procedure FormCreate(Sender: TObject);
   private
     procedure AddFrame(const Caption: string; FrameClass: TControlClass);
@@ -46,6 +47,7 @@ implementation
 {$R *.dfm}
 
 uses
+  OpenSSL.Core,
   SSLDemo.MainFrame,
   SSLDemo.EncFrame,
   SSLDemo.UnpackPKCS7Frame,
@@ -72,6 +74,10 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  if not LoadOpenSSLLibrary then
+    ShowMessage('Cannon load OpenSSL library');
+  StatusBar1.Panels[0].Text := OpenSSLName;
+
   AddFrame('Tutorial', TMainFrame);
   AddFrame('Encryption', TEncFrame);
   AddFrame('Sign', TSignFrame);

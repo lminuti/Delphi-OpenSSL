@@ -27,16 +27,9 @@ unit OpenSSL.RandUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
-  System.SysUtils, System.IOUtils,
-  {$IFNDEF USE_TAURUS_TLS}
-  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
-  {$ELSE}
-  TaurusTLSHeaders_types, TaurusTLSHeaders_rand,
-  {$ENDIF}
-  OpenSSL.Core;
+  System.SysUtils,
+  OpenSSL.Api, OpenSSL.Core;
 
 type
   TRandUtil = class(TObject)
@@ -66,7 +59,6 @@ implementation
 { TRandUtil }
 
 class function TRandUtil.GetDefaultSeedFileName: string;
-{$IFNDEF USE_TAURUS_TLS}
 const
   MaxLen = 255;
 var
@@ -79,28 +71,17 @@ begin
     RaiseOpenSSLError('RAND_file_name error');
   Result := string(AnsiString(PAnsiChar(Filename)));
 end;
-{$ELSE}
-begin
-  Result := GetEnvironmentVariable('RANDFILE');
-  if Result = '' then
-    Result := TPath.Combine(TPath.GetHomePath, '.rnd');
-end;
-{$ENDIF}
 
 class function TRandUtil.GetPseudoRandomBytes(const Size: Integer): TBytes;
 var
   ErrCode: Integer;
 begin
   SetLength(Result, Size);
-  {$IFNDEF USE_TAURUS_TLS}
-  ErrCode := RAND_pseudo_bytes(@Result[0], Size);
-  {$ELSE}
   ErrCode := RAND_bytes(@Result[0], Size);
-  {$ENDIF}
   if ErrCode = -1 then
     RaiseOpenSSLError('RAND method not supported');
   if ErrCode = 0 then
-    RaiseOpenSSLError('RAND_pseudo_bytes error');
+    RaiseOpenSSLError('RAND_bytes error');
 end;
 
 class function TRandUtil.GetRandomBytes(const Size: Integer): TBytes;

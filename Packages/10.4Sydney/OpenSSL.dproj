@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{4D944443-DB16-471B-BCD5-AE06947E67E3}</ProjectGuid>
         <MainSource>OpenSSL.dpk</MainSource>
@@ -96,12 +96,9 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="rtl.dcp"/>
-        <DCCReference Include="IndySystem.dcp"/>
-        <DCCReference Include="IndyProtocols.dcp"/>
-        <DCCReference Include="IndyCore.dcp"/>
         <DCCReference Include="..\..\Source\OpenSSL.Core.pas"/>
         <DCCReference Include="..\..\Source\OpenSSL.EncUtils.pas"/>
-        <DCCReference Include="..\..\Source\OpenSSL.libeay32.pas"/>
+        <DCCReference Include="..\..\Source\OpenSSL.Api.pas"/>
         <DCCReference Include="..\..\Source\OpenSSL.RandUtils.pas"/>
         <DCCReference Include="..\..\Source\OpenSSL.RSAUtils.pas"/>
         <DCCReference Include="..\..\Source\OpenSSL.SMIMEUtils.pas"/>

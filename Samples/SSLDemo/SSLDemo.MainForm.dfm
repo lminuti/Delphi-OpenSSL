@@ -17,8 +17,20 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 847
-    Height = 635
+    Height = 616
     Align = alClient
     TabOrder = 0
+    ExplicitHeight = 635
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 616
+    Width = 847
+    Height = 19
+    Panels = <
+      item
+        Width = 50
+      end>
+    ExplicitTop = 622
   end
 end

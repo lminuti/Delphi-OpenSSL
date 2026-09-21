@@ -30,15 +30,12 @@ package OpenSSL;
 {$IMPLICITBUILD OFF}
 
 requires
-  rtl,
-  IndySystem,
-  IndyProtocols,
-  IndyCore;
+  rtl;
 
 contains
   OpenSSL.Core in '..\..\Source\OpenSSL.Core.pas',
   OpenSSL.EncUtils in '..\..\Source\OpenSSL.EncUtils.pas',
-  OpenSSL.libeay32 in '..\..\Source\OpenSSL.libeay32.pas',
+  OpenSSL.Api in '..\..\Source\OpenSSL.Api.pas',
   OpenSSL.RandUtils in '..\..\Source\OpenSSL.RandUtils.pas',
   OpenSSL.RSAUtils in '..\..\Source\OpenSSL.RSAUtils.pas',
   OpenSSL.SMIMEUtils in '..\..\Source\OpenSSL.SMIMEUtils.pas',

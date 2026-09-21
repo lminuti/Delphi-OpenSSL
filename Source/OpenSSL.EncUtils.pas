@@ -25,18 +25,11 @@
 
 unit OpenSSL.EncUtils;
 
-{$I OpenSSL.inc}
-
 interface
 
 uses
   System.Classes, System.SysUtils, System.AnsiStrings, Generics.Collections,
-  {$IFNDEF USE_TAURUS_TLS}
-  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
-  {$ELSE}
-  TaurusTLSHeaders_types, TaurusTLSHeaders_evp,
-  {$ENDIF}
-  OpenSSL.Core;
+  OpenSSL.Api, OpenSSL.Core;
 
 type
   TCipherName = string;
@@ -195,11 +188,11 @@ begin
 
     SetLength(OutputBuffer, InputStream.Size);
     BuffStart := 0;
-    if OpenSSL.Core.EVP_DecryptUpdate(Context, @OutputBuffer[BuffStart], OutputLen, @InputBuffer[InputStart], Length(InputBuffer) - InputStart) <> 1 then
+    if EVP_DecryptUpdate(Context, @OutputBuffer[BuffStart], @OutputLen, @InputBuffer[InputStart], Length(InputBuffer) - InputStart) <> 1 then
       RaiseOpenSSLError('Cannot decrypt');
     Inc(BuffStart, OutputLen);
 
-    if OpenSSL.Core.EVP_DecryptFinal_ex(Context, @OutputBuffer[BuffStart], OutputLen) <> 1 then
+    if EVP_DecryptFinal_ex(Context, @OutputBuffer[BuffStart], @OutputLen) <> 1 then
       RaiseOpenSSLError('Cannot finalize decryption process');
     Inc(BuffStart, OutputLen);
 
@@ -284,11 +277,11 @@ begin
     else
       SetLength(OutputBuffer, Length(InputBuffer) + BlockSize);
 
-    if OpenSSL.Core.EVP_EncryptUpdate(Context, @OutputBuffer[BuffStart], OutputLen, @InputBuffer[0], Length(InputBuffer)) <> 1 then
+    if EVP_EncryptUpdate(Context, @OutputBuffer[BuffStart], @OutputLen, @InputBuffer[0], Length(InputBuffer)) <> 1 then
       RaiseOpenSSLError('Cannot encrypt');
     Inc(BuffStart, OutputLen);
 
-    if OpenSSL.Core.EVP_EncryptFinal_ex(Context, @OutputBuffer[BuffStart], OutputLen) <> 1 then
+    if EVP_EncryptFinal_ex(Context, @OutputBuffer[BuffStart], @OutputLen) <> 1 then
       RaiseOpenSSLError('Cannot finalize encryption process');
     Inc(BuffStart, OutputLen);
     SetLength(OutputBuffer, BuffStart);
@@ -331,6 +324,9 @@ class procedure TEncUtil.RegisterCipher(const Name: TCipherName;
 var
   Value :TCipherInfo;
 begin
+  // Ciphers not exported by the loaded OpenSSL version are simply skipped.
+  if not Assigned(Proc) then
+    Exit;
   Value.Name := Name;
   Value.Proc := Proc;
   FCipherList.Add(Value);
@@ -409,13 +405,11 @@ begin
   RegisterCipher('DESX', EVP_desx_cbc);
 
   // IDEA algorithm
-  {$IFNDEF USE_TAURUS_TLS}
   RegisterCipher('IDEA-CBC', EVP_idea_cbc);
   RegisterCipher('IDEA', EVP_idea_cbc);
   RegisterCipher('IDEA-CFB', EVP_idea_cfb64);
   RegisterCipher('IDEA-ECB', EVP_idea_ecb);
   RegisterCipher('IDEA-OFB', EVP_idea_ofb);
-  {$ENDIF}
 
   // RC2
   RegisterCipher('RC2-CBC', EVP_rc2_cbc);

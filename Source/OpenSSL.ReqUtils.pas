@@ -23,18 +23,9 @@ unit OpenSSL.ReqUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.Classes, System.SysUtils,
-  {$IFNDEF USE_TAURUS_TLS}
-  Winapi.Windows,
-  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
-  {$ELSE}
-  TaurusTLSHeaders_types, TaurusTLSHeaders_x509, TaurusTLSHeaders_asn1,
-  TaurusTLSHeaders_bio, TaurusTLSHeaders_evp, TaurusTLSHeaders_pem,
-  {$ENDIF}
-  OpenSSL.Core, OpenSSL.RSAUtils;
+  OpenSSL.Api, OpenSSL.Core, OpenSSL.RSAUtils;
 
 type
   TReqUtil = class(TOpenSLLBase)
@@ -69,13 +60,9 @@ type
 
 implementation
 
-function X509_NAME_add_entry_by_string(name: PX509_NAME; const field: string; const Value: string): Integer;
+function X509_NAME_add_entry_by_string(name: PX509_NAME; const field, value: string): Integer;
 begin
-  {$IFNDEF USE_TAURUS_TLS}
-  Result:= X509_NAME_add_entry_by_txt(Name, PAnsiChar(AnsiString(field)), MBSTRING_ASC, PAnsiChar(AnsiString(Value)), -1, -1, 0);
-  {$ELSE}
-  Result:= X509_NAME_add_entry_by_txt(Name, PAnsiChar(AnsiString(field)), MBSTRING_ASC, PByte(AnsiString(Value)), -1, -1, 0);
-  {$ENDIF}
+  Result := X509_NAME_add_entry_by_txt(Name, PAnsiChar(AnsiString(field)), MBSTRING_ASC, PByte(AnsiString(Value)), -1, -1, 0);
 end;
 
 { TReqUtil }
@@ -196,13 +183,7 @@ begin
   end;
 
   // Create X509 structure
-  {$IFNDEF USE_TAURUS_TLS}
-  // Use the OpenSSL.libeay32 binding: its prototype correctly returns PX509,
-  // unlike the Indy header shipped with some Delphi versions (which returns PPX509).
-  FX509 := OpenSSL.libeay32.X509_new();
-  {$ELSE}
   FX509 := X509_new();
-  {$ENDIF}
   if FX509 = nil then
     RaiseOpenSSLError('Failed to create X509 structure');
 
@@ -212,13 +193,7 @@ begin
       RaiseOpenSSLError('Failed to set X509 version');
 
     // Set serial number (using timestamp for uniqueness)
-    {$IFNDEF USE_TAURUS_TLS}
-    // TThread.GetTickCount64 is not available on older Delphi versions; use the
-    // Win32 API directly on the Indy/libeay32 path (Windows only).
-    if ASN1_INTEGER_set(X509_get_serialNumber(FX509), Winapi.Windows.GetTickCount) = 0 then
-    {$ELSE}
-    if ASN1_INTEGER_set(X509_get_serialNumber(FX509), TThread.GetTickCount64) = 0 then
-    {$ENDIF}
+    if ASN1_INTEGER_set(X509_get_serialNumber(FX509), LongInt(TThread.GetTickCount64)) = 0 then
       RaiseOpenSSLError('Failed to set serial number');
 
     // Set validity period
@@ -340,7 +315,7 @@ begin
   if FX509 = nil then
     raise EOpenSSLError.Create('No certificate to save');
 
-  Bio := BIO_new(BIO_s_mem);
+  Bio := BIO_new(BIO_s_mem());
   if Bio = nil then
     RaiseOpenSSLError('Failed to create BIO');
   try
@@ -377,7 +352,7 @@ begin
   if FX509Req = nil then
     raise EOpenSSLError.Create('No CSR to save');
 
-  Bio := BIO_new(BIO_s_mem);
+  Bio := BIO_new(BIO_s_mem());
   if Bio = nil then
     RaiseOpenSSLError('Failed to create BIO');
   try

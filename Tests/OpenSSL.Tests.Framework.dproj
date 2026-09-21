@@ -5,8 +5,8 @@
         <MainSource>OpenSSL.Tests.Framework.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Win32</Platform>
-        <TargetedPlatforms>1</TargetedPlatforms>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
+        <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Console</AppType>
         <FrameworkType>VCL</FrameworkType>
         <ProjectName Condition="'$(ProjectName)'==''">OpenSSL.Tests.Framework</ProjectName>
@@ -63,7 +63,7 @@
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <UsingDelphiRTL>true</UsingDelphiRTL>
-        <DCC_UnitSearchPath>..\Source;C:\Progetti\TaurusTLS\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\Source;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <SanitizedProjectName>OpenSSL_Tests_Framework</SanitizedProjectName>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
@@ -103,7 +103,6 @@
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
         <VerInfo_Keys>CompanyName=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductVersion=1.0.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
         <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
-        <Debugger_RunParams>/OPENSSL_VERSION:1.1.1w</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -141,8 +140,8 @@
         <DCCReference Include="OpenSSL.Tests.SMIMEUtils.pas"/>
         <DCCReference Include="OpenSSL.Tests.ReqUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.Core.pas"/>
+        <DCCReference Include="..\Source\OpenSSL.Api.pas"/>
         <DCCReference Include="..\Source\OpenSSL.EncUtils.pas"/>
-        <DCCReference Include="..\Source\OpenSSL.libeay32.pas"/>
         <DCCReference Include="..\Source\OpenSSL.RandUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.RSAUtils.pas"/>
         <DCCReference Include="..\Source\OpenSSL.SMIMEUtils.pas"/>
@@ -1059,7 +1058,7 @@
             </Deployment>
             <Platforms>
                 <Platform value="Win32">True</Platform>
-                <Platform value="Win64">False</Platform>
+                <Platform value="Win64">True</Platform>
             </Platforms>
             <ModelSupport>False</ModelSupport>
         </BorlandProject>

@@ -46,8 +46,8 @@ uses
   OpenSSL.Tests.SMIMEUtils in 'OpenSSL.Tests.SMIMEUtils.pas',
   OpenSSL.Tests.ReqUtils in 'OpenSSL.Tests.ReqUtils.pas',
   OpenSSL.Core in '..\Source\OpenSSL.Core.pas',
+  OpenSSL.Api in '..\Source\OpenSSL.Api.pas',
   OpenSSL.EncUtils in '..\Source\OpenSSL.EncUtils.pas',
-  OpenSSL.libeay32 in '..\Source\OpenSSL.libeay32.pas',
   OpenSSL.RandUtils in '..\Source\OpenSSL.RandUtils.pas',
   OpenSSL.RSAUtils in '..\Source\OpenSSL.RSAUtils.pas',
   OpenSSL.SMIMEUtils in '..\Source\OpenSSL.SMIMEUtils.pas',
@@ -64,14 +64,25 @@ begin
     procedure (AValue: string)
     begin
       OpenSSLVersionAsk := AValue;
+      {$IFDEF WIN64}
       if AValue.StartsWith('4.') then
-        SSLLibVersion := '-4'
+        GetOpenSSLLoader.SSLLibVersions := 'libcrypto-4-x64'
       else if AValue.StartsWith('3.') then
-        SSLLibVersion := '-3'
+        GetOpenSSLLoader.SSLLibVersions := 'libcrypto-3-x64'
       else if AValue.StartsWith('1.1.') then
-        SSLLibVersion := '-1_1'
+        GetOpenSSLLoader.SSLLibVersions := 'libcrypto-1_1-x64'
       else if AValue.StartsWith('1.0.') then
-        SSLLibVersion := '-1';
+        GetOpenSSLLoader.SSLLibVersions := 'libeay32';
+      {$ELSE}
+      if AValue.StartsWith('4.') then
+        GetOpenSSLLoader.SSLLibVersions := 'libcrypto-4'
+      else if AValue.StartsWith('3.') then
+        GetOpenSSLLoader.SSLLibVersions := 'libcrypto-3'
+      else if AValue.StartsWith('1.1.') then
+        GetOpenSSLLoader.SSLLibVersions := 'libcrypto-1_1'
+      else if AValue.StartsWith('1.0.') then
+        GetOpenSSLLoader.SSLLibVersions := 'libeay32';
+      {$ENDIF}
     end
   );
 {$IFDEF TESTINSIGHT}

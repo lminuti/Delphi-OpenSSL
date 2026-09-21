@@ -1,4 +1,4 @@
-﻿{******************************************************************************}
+{******************************************************************************}
 {                                                                              }
 {  Delphi OPENSSL Library                                                      }
 {  Copyright (c) Luca Minuti                                                   }
@@ -23,12 +23,10 @@ unit OpenSSL.Tests.EncUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.SysUtils, System.Classes,
   DUnitX.TestFramework,
-  OpenSSL.EncUtils, OpenSSL.Core;
+  OpenSSL.EncUtils, OpenSSL.Core, OpenSSL.Api;
 
 type
   [TestFixture]
@@ -47,10 +45,7 @@ type
     [TestCase('AES-192', 'AES-192')]
     [TestCase('AES-256', 'AES-256')]
     [TestCase('DES3', 'DES3')]
-    {$IFNDEF USE_TAURUS_TLS}
-    // Deprecated with OpenSSL 3.0
     [TestCase('BF', 'BF')]
-    {$ENDIF}
     procedure TestEncryptDecryptWithCipher(const CipherName: string);
     [Test]
     procedure TestEmptyInputTBytes;
@@ -180,6 +175,10 @@ var
   OriginalBytes, EncryptedBytes, DecryptedBytes: TBytes;
   OriginalText, DecryptedText: string;
 begin
+  // Legacy ciphers (Blowfish, ...) require the legacy provider on OpenSSL 3.x
+  if (CipherName = 'BF') and (GetOpenSSLLoader.VersionNum >= $30000000) then
+    Assert.Pass('Blowfish requires the legacy provider on OpenSSL 3.x');
+
   EncUtil := TEncUtil.Create;
   try
     EncUtil.Passphrase := 'TestPassword123';
@@ -212,10 +211,10 @@ begin
     SetLength(EmptyInput, 0);
 
     EncUtil.Encrypt(EmptyInput, EncryptedBytes);
-    Assert.AreEqual(0, Length(EncryptedBytes), 'Empty input should produce empty encrypted output');
+    Assert.AreEqual(0, Integer(Length(EncryptedBytes)), 'Empty input should produce empty encrypted output');
 
     EncUtil.Decrypt(EmptyInput, DecryptedBytes);
-    Assert.AreEqual(0, Length(DecryptedBytes), 'Empty input should produce empty decrypted output');
+    Assert.AreEqual(0, Integer(Length(DecryptedBytes)), 'Empty input should produce empty decrypted output');
   finally
     EncUtil.Free;
   end;

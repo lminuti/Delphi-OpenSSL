@@ -27,19 +27,9 @@ unit OpenSSL.SMIMEUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.Classes, System.SysUtils,
-
-  {$IFNDEF USE_TAURUS_TLS}
-  OpenSSL.libeay32, IdSSLOpenSSLHeaders,
-  {$ELSE}
-  TaurusTLSHeaders_types, TaurusTLSHeaders_bio, TaurusTLSHeaders_x509_vfy,
-  TaurusTLSHeaders_pkcs7,
-  {$ENDIF}
-
-  OpenSSL.Core;
+  OpenSSL.Api, OpenSSL.Core;
 
 type
   TSMIMEUtil = class(TOpenSLLBase)
@@ -59,6 +49,7 @@ var
   LCerts: PSTACK_OF_X509;
   LFlags, LOutputLen: Integer;
   LOutputBuffer, LInputBuffer: TBytes;
+  LOutputPtr: Pointer;
 begin
 
   Result := 0;
@@ -79,11 +70,7 @@ begin
       RaiseOpenSSLError('BIO_new_file');
 
     LPKCS7 := nil;
-    {$IFNDEF USE_TAURUS_TLS}
-    LPKCS7 := d2i_PKCS7_bio(LInput, LPKCS7);
-    {$ELSE}
     LPKCS7 := d2i_PKCS7_bio(LInput, @LPKCS7);
-    {$ENDIF}
 
     if not Assigned(LPKCS7) then
       RaiseOpenSSLError('FSMIME_read_PKCS7');
@@ -98,13 +85,11 @@ begin
 
       if Assigned(LOutput) and Assigned(OutputStream) then
       begin
-        {$IFNDEF USE_TAURUS_TLS}
-        LOutputLen := LOutput.num_write;
-        {$ELSE}
-        LOutputLen := BIO_number_written(LOutput);
-        {$ENDIF}
+        LOutputPtr := nil;
+        LOutputLen := BIO_get_mem_data(LOutput, @LOutputPtr);
         SetLength(LOutputBuffer, LOutputLen);
-        BIO_read(LOutput, LOutputBuffer);
+        if LOutputLen > 0 then
+          Move(LOutputPtr^, LOutputBuffer[0], LOutputLen);
 
         OutputStream.WriteBuffer(LOutputBuffer, LOutputLen);
       end;

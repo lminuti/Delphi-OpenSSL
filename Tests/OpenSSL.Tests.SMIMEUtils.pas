@@ -23,8 +23,6 @@ unit OpenSSL.Tests.SMIMEUtils;
 
 interface
 
-{$I OpenSSL.inc}
-
 uses
   System.SysUtils, System.Classes, System.NetEncoding,
   DUnitX.TestFramework,
@@ -180,7 +178,7 @@ begin
 
         // The signed content is the whole test.txt file
         Expected := GetExpectedContent;
-        Assert.AreEqual(Int64(Length(Expected)), OutputStream.Size, 'Unexpected content length');
+        Assert.AreEqual(Int64(Integer(Length(Expected))), OutputStream.Size, 'Unexpected content length');
 
         SetLength(OutputData, Length(Expected));
         OutputStream.Position := 0;
