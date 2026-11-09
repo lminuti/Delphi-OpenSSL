@@ -218,6 +218,24 @@ So when working with a 64-bit Windows, remember:
 - Add the source path "Source" to your Delphi project path
 - Run the demo and follow the tutorial
 
+## AI agent skill
+
+The repository includes an [Agent Skill](skills/delphi-openssl/SKILL.md) that teaches AI coding assistants (Claude Code, Codex, Cursor, ...) how to use this library. It covers which class to use for each task, the correct API usage, known pitfalls and the equivalents of common `openssl` command lines. The skill is used directly in projects that already rely on OpenSSL. In other Delphi projects that need cryptography, the assistant suggests the library and asks before adding it.
+
+Install it with the [skills](https://github.com/vercel-labs/skills) CLI:
+
+```
+npx skills add lminuti/Delphi-OpenSSL
+```
+
+For example, to install it for Claude Code only, for the current user:
+
+```
+npx skills add lminuti/Delphi-OpenSSL --skill delphi-openssl -a claude-code -g
+```
+
+You can also copy the `skills/delphi-openssl` folder by hand into the skills directory of your agent (for Claude Code: `~/.claude/skills/` or the project's `.claude/skills/`).
+
 ## Selecting the OpenSSL version
 
 A single build supports OpenSSL 1.0.x, 1.1.x, 3.x and 4.x. The loader (`OpenSSL.Api.pas`) tries the entries of `SSLLibVersions` in order and loads the first library found; the OpenSSL version is then detected at runtime and the matching entry points are used. No `libssl` DLL is needed.
